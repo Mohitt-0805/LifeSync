@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login — FitNovaAI</title>
+    <meta name="description" content="Sign in to FitNovaAI to access your personalized AI workout plans, BMI tracking, and fitness dashboard." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="login.css" />
+</head>
+<body>
+    <!-- ═══ Floating particles background ═══ -->
+    <div class="particles" id="particles"></div>
+
+    <!-- ═══ Ambient Glow Orbs ═══ -->
+    <div class="login-backdrop">
+        <div class="glow-orb glow-1"></div>
+        <div class="glow-orb glow-2"></div>
+        <div class="glow-orb glow-3"></div>
+    </div>
+
+    <!-- ═══ Main Login Container ═══ -->
+    <main class="login-page">
+        <!-- Brand -->
+        <a href="/" class="login-brand" id="loginBrand">
+            <span class="brand-icon">⚡</span>
+            <span class="brand-text">FitNova<span class="brand-ai">AI</span></span>
+        </a>
+
+        <!-- ═══ Step 1: Email Input ═══ -->
+        <div class="login-card glass-card" id="stepEmail">
+            <div class="card-header">
+                <h1 class="card-title">Welcome Back</h1>
+                <p class="card-subtitle">Enter your email to continue</p>
+            </div>
+            <form id="emailForm" class="login-form">
+                <div class="form-group">
+                    <label for="loginEmail">Email Address</label>
+                    <div class="input-wrapper input-icon-wrapper">
+                        <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 4L12 13 2 4"/></svg>
+                        <input type="email" id="loginEmail" placeholder="you@example.com" required autocomplete="email" autofocus />
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block" id="emailSubmitBtn">
+                    <span>Continue</span>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </button>
+            </form>
+            <div class="card-divider">
+                <span>or</span>
+            </div>
+            <button class="btn btn-glass btn-block" id="showPasswordLogin">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                <span>Login with Password</span>
+            </button>
+            <p class="switch-mode-text">Don't have an account? <button type="button" class="link-btn" id="showSignup">Sign Up</button></p>
+        </div>
+
+        <!-- ═══ Step: Sign Up ═══ -->
+        <div class="login-card glass-card hidden" id="stepSignup">
+            <button class="back-btn" id="signupBackBtn" type="button">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                <span>Back</span>
+            </button>
+            <div class="card-header">
+                <div class="icon-wrapper">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+                </div>
+                <h1 class="card-title">Create Account</h1>
+                <p class="card-subtitle">Join FitNovaAI and start your fitness journey</p>
+            </div>
+            <form id="signupForm" class="login-form">
+                <div class="form-group">
+                    <label for="signupName">Full Name</label>
+                    <div class="input-wrapper input-icon-wrapper">
+                        <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        <input type="text" id="signupName" placeholder="John Doe" required autocomplete="name" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="signupEmail">Email Address</label>
+                    <div class="input-wrapper input-icon-wrapper">
+                        <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 7L2 7"/></svg>
+                        <input type="email" id="signupEmail" placeholder="you@example.com" required autocomplete="email" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="signupAge">Age</label>
+                    <div class="input-wrapper input-icon-wrapper">
+                        <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        <input type="number" id="signupAge" placeholder="25" required min="10" max="120" />
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block" id="signupSubmitBtn">
+                    <span>Continue</span>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </button>
+            </form>
+            <p class="switch-mode-text">Already have an account? <button type="button" class="link-btn" id="showLoginFromSignup">Login</button></p>
+        </div>
+
+        <!-- ═══ Step 2: OTP Verification ═══ -->
+        <div class="login-card glass-card hidden" id="stepOTP">
+            <button class="back-btn" id="otpBackBtn" type="button">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                <span>Back</span>
+            </button>
+            <div class="card-header">
+                <div class="otp-icon-wrapper">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 4L12 13 2 4"/></svg>
+                </div>
+                <h1 class="card-title">Check your email</h1>
+                <p class="card-subtitle">We sent a 6-digit code to<br><strong class="email-highlight" id="otpEmailDisplay"></strong></p>
+            </div>
+            <form id="otpForm" class="login-form">
+                <div class="otp-inputs" id="otpInputs">
+                    <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" class="otp-digit" data-index="0" autocomplete="one-time-code" />
+                    <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" class="otp-digit" data-index="1" />
+                    <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" class="otp-digit" data-index="2" />
+                    <span class="otp-separator">—</span>
+                    <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" class="otp-digit" data-index="3" />
+                    <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" class="otp-digit" data-index="4" />
+                    <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" class="otp-digit" data-index="5" />
+                </div>
+                <div class="otp-error hidden" id="otpError"></div>
+                <button type="submit" class="btn btn-primary btn-block" id="otpSubmitBtn">
+                    <span>Verify Code</span>
+                </button>
+            </form>
+            <div class="resend-section">
+                <p class="resend-text" id="resendText">Resend code in <span id="resendTimer" class="timer-highlight">60</span>s</p>
+                <button class="btn-link hidden" id="resendBtn" type="button">Resend Code</button>
+            </div>
+        </div>
+
+        <!-- ═══ Step 3a: Password Login (existing user) ═══ -->
+        <div class="login-card glass-card hidden" id="stepPasswordLogin">
+            <button class="back-btn" id="pwLoginBackBtn" type="button">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                <span>Back</span>
+            </button>
+            <div class="card-header">
+                <h1 class="card-title">Login with Password</h1>
+                <p class="card-subtitle">Enter your credentials to continue</p>
+            </div>
+            <form id="passwordLoginForm" class="login-form">
+                <div class="form-group">
+                    <label for="pwLoginEmail">Email Address</label>
+                    <div class="input-wrapper input-icon-wrapper">
+                        <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 4L12 13 2 4"/></svg>
+                        <input type="email" id="pwLoginEmail" placeholder="you@example.com" required autocomplete="email" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="pwLoginPassword">Password</label>
+                    <div class="input-wrapper input-icon-wrapper">
+                        <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                        <input type="password" id="pwLoginPassword" placeholder="Enter your password" required autocomplete="current-password" />
+                        <button type="button" class="pw-toggle" id="pwLoginToggle" tabindex="-1">
+                            <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                            <svg class="eye-closed hidden" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                        </button>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block" id="pwLoginSubmitBtn">
+                    <span>Login</span>
+                </button>
+            </form>
+            <div class="forgot-section">
+                <button class="btn-link" id="forgotPasswordBtn" type="button">Forgot your password?</button>
+            </div>
+        </div>
+
+        <!-- ═══ Step 3b: Registration (new user) ═══ -->
+        <div class="login-card glass-card hidden" id="stepRegister">
+            <button class="back-btn" id="regBackBtn" type="button">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                <span>Back</span>
+            </button>
+            <div class="card-header">
+                <div class="check-icon-wrapper">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                </div>
+                <h1 class="card-title">Almost there!</h1>
+                <p class="card-subtitle">Set up your profile to get started</p>
+            </div>
+            <form id="registerForm" class="login-form">
+                <div class="form-group">
+                    <label for="regName">Full Name</label>
+                    <div class="input-wrapper input-icon-wrapper">
+                        <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        <input type="text" id="regName" placeholder="John Doe" required autocomplete="name" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="regPassword">Create Password</label>
+                    <div class="input-wrapper input-icon-wrapper">
+                        <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                        <input type="password" id="regPassword" placeholder="Min 8 chars, 1 uppercase, 1 number" required autocomplete="new-password" />
+                        <button type="button" class="pw-toggle" id="regPwToggle" tabindex="-1">
+                            <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                            <svg class="eye-closed hidden" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                        </button>
+                    </div>
+                    <div class="password-strength" id="regStrength">
+                        <div class="strength-bars">
+                            <div class="strength-bar"></div>
+                            <div class="strength-bar"></div>
+                            <div class="strength-bar"></div>
+                            <div class="strength-bar"></div>
+                        </div>
+                        <span class="strength-label" id="regStrengthLabel"></span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="regConfirmPassword">Confirm Password</label>
+                    <div class="input-wrapper input-icon-wrapper">
+                        <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                        <input type="password" id="regConfirmPassword" placeholder="Re-enter password" required autocomplete="new-password" />
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block" id="regSubmitBtn">
+                    <span>Create Account</span>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </button>
+            </form>
+        </div>
+
+        <!-- ═══ Step 4: Forgot Password ═══ -->
+        <div class="login-card glass-card hidden" id="stepForgotPassword">
+            <button class="back-btn" id="forgotBackBtn" type="button">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                <span>Back</span>
+            </button>
+            <div class="card-header">
+                <div class="otp-icon-wrapper">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                </div>
+                <h1 class="card-title">Reset Password</h1>
+                <p class="card-subtitle">Enter your email to receive a reset code</p>
+            </div>
+            <form id="forgotPasswordForm" class="login-form">
+                <div class="form-group">
+                    <label for="forgotEmail">Email Address</label>
+                    <div class="input-wrapper input-icon-wrapper">
+                        <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 4L12 13 2 4"/></svg>
+                        <input type="email" id="forgotEmail" placeholder="you@example.com" required autocomplete="email" />
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block" id="forgotSubmitBtn">
+                    <span>Send Reset Code</span>
+                </button>
+            </form>
+        </div>
+
+        <!-- ═══ Step 5: Reset Password OTP + New Password ═══ -->
+        <div class="login-card glass-card hidden" id="stepResetPassword">
+            <button class="back-btn" id="resetBackBtn" type="button">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                <span>Back</span>
+            </button>
+            <div class="card-header">
+                <h1 class="card-title">Set New Password</h1>
+                <p class="card-subtitle">Enter the code sent to your email and choose a new password</p>
+            </div>
+            <form id="resetPasswordForm" class="login-form">
+                <div class="form-group">
+                    <label>Verification Code</label>
+                    <div class="otp-inputs otp-inputs-sm" id="resetOtpInputs">
+                        <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" class="otp-digit" data-index="0" />
+                        <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" class="otp-digit" data-index="1" />
+                        <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" class="otp-digit" data-index="2" />
+                        <span class="otp-separator">—</span>
+                        <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" class="otp-digit" data-index="3" />
+                        <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" class="otp-digit" data-index="4" />
+                        <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" class="otp-digit" data-index="5" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="resetNewPassword">New Password</label>
+                    <div class="input-wrapper input-icon-wrapper">
+                        <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                        <input type="password" id="resetNewPassword" placeholder="Min 8 chars, 1 uppercase, 1 number" required autocomplete="new-password" />
+                        <button type="button" class="pw-toggle" id="resetPwToggle" tabindex="-1">
+                            <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                            <svg class="eye-closed hidden" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                        </button>
+                    </div>
+                    <div class="password-strength" id="resetStrength">
+                        <div class="strength-bars">
+                            <div class="strength-bar"></div>
+                            <div class="strength-bar"></div>
+                            <div class="strength-bar"></div>
+                            <div class="strength-bar"></div>
+                        </div>
+                        <span class="strength-label" id="resetStrengthLabel"></span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="resetConfirmPassword">Confirm New Password</label>
+                    <div class="input-wrapper input-icon-wrapper">
+                        <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                        <input type="password" id="resetConfirmPassword" placeholder="Re-enter new password" required autocomplete="new-password" />
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block" id="resetSubmitBtn">
+                    <span>Reset Password</span>
+                </button>
+            </form>
+        </div>
+
+        <!-- ═══ Success Screen ═══ -->
+        <div class="login-card glass-card hidden" id="stepSuccess">
+            <div class="card-header success-header">
+                <div class="success-icon-wrapper">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                        <polyline points="22 4 12 14.01 9 11.01"/>
+                    </svg>
+                </div>
+                <h1 class="card-title" id="successTitle">Password Reset!</h1>
+                <p class="card-subtitle" id="successSubtitle">Your password has been successfully updated.</p>
+            </div>
+            <a href="/login" class="btn btn-primary btn-block" id="successLoginBtn">
+                <span>Login Now</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </a>
+        </div>
+
+        <!-- Footer -->
+        <p class="login-footer">
+            <a href="/">← Back to FitNovaAI</a>
+        </p>
+    </main>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="login.js"></script>
+</body>
+</html>

@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FitNovaAI — AI-Powered Fitness & BMI Tracker</title>
+    <meta name="description" content="Calculate your BMI and get personalized AI-driven gym workouts tailored to your fitness goals, level, and body type." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <!-- ═══ Floating particles background ═══ -->
+    <div class="particles" id="particles"></div>
+
+    <!-- ═══ Navigation ═══ -->
+    <nav class="navbar" id="navbar">
+        <a href="#hero" class="nav-brand">
+            <span class="brand-icon">⚡</span>
+            <span class="brand-text">FitNova<span class="brand-ai">AI</span></span>
+        </a>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="#hero" class="nav-link active" data-section="hero">Home</a></li>
+            <li><a href="#bmi" class="nav-link" data-section="bmi">BMI Calculator</a></li>
+            <li><a href="#workout" class="nav-link" data-section="workout">AI Workout</a></li>
+            <li><a href="#dashboard" class="nav-link" data-section="dashboard">Dashboard</a></li>
+            <li><a href="#exercises" class="nav-link" data-section="exercises">Exercises</a></li>
+        </ul>
+        <div class="nav-right">
+            <!-- Guest state: Login button -->
+            <a href="/login" class="btn btn-primary btn-nav" id="navLoginBtn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+                <span>Login</span>
+            </a>
+            <!-- Logged-in state: User menu -->
+            <div class="user-menu hidden" id="userMenu">
+                <button class="user-avatar-btn" id="userAvatarBtn">
+                    <div class="user-avatar" id="userAvatar">
+                        <span id="userInitial">U</span>
+                    </div>
+                    <span class="user-name-nav" id="userNameNav">User</span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+                </button>
+                <div class="user-dropdown" id="userDropdown">
+                    <div class="dropdown-header">
+                        <span class="dropdown-name" id="dropdownName">User</span>
+                        <span class="dropdown-email" id="dropdownEmail">user@email.com</span>
+                    </div>
+                    <div class="dropdown-divider"></div>
+                    <button class="dropdown-item" id="changePasswordBtn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                        <span>Change Password</span>
+                    </button>
+                    <button class="dropdown-item dropdown-item-danger" id="logoutBtn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                        <span>Logout</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+            <span></span><span></span><span></span>
+        </button>
+    </nav>
+
+    <!-- ═══ Change Password Modal ═══ -->
+    <div class="modal-overlay hidden" id="changePasswordModal">
+        <div class="modal-card glass-card">
+            <button class="modal-close" id="modalCloseBtn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+            <h2 class="modal-title">Change Password</h2>
+            <p class="modal-subtitle">Enter your current password and choose a new one.</p>
+            <form id="changePasswordForm">
+                <div class="form-group">
+                    <label for="currentPassword">Current Password</label>
+                    <div class="input-wrapper">
+                        <input type="password" id="currentPassword" placeholder="Enter current password" required />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="newPassword">New Password</label>
+                    <div class="input-wrapper">
+                        <input type="password" id="newPassword" placeholder="Min 8 chars, 1 uppercase, 1 number" required />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="confirmNewPassword">Confirm New Password</label>
+                    <div class="input-wrapper">
+                        <input type="password" id="confirmNewPassword" placeholder="Re-enter new password" required />
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block" id="changePasswordSubmitBtn">
+                    <span>Update Password</span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ═══ Hero Section ═══ -->
+    <section class="hero" id="hero">
+        <div class="hero-content">
+            <span class="hero-badge">🔥 AI-Powered Fitness</span>
+            <h1 class="hero-title">
+                Transform Your Body<br />
+                With <span class="gradient-text">FitNovaAI</span>
+            </h1>
+            <p class="hero-subtitle">
+                Calculate your BMI, get personalized AI workout plans, and track your fitness journey — all in one place.
+            </p>
+            <div class="hero-actions">
+                <a href="#bmi" class="btn btn-primary btn-lg" id="heroCtaPrimary">
+                    <span>Calculate BMI</span>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </a>
+                <a href="#workout" class="btn btn-glass btn-lg" id="heroCtaSecondary">
+                    <span>Generate Workout</span>
+                </a>
+            </div>
+            <div class="hero-stats">
+                <div class="stat-item">
+                    <span class="stat-number" data-target="26">0</span>
+                    <span class="stat-label">Exercises</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" data-target="5">0</span>
+                    <span class="stat-label">Goal Types</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" data-target="100">0</span>
+                    <span class="stat-label">% Free</span>
+                </div>
+            </div>
+        </div>
+        <div class="hero-visual">
+            <div class="glow-orb glow-1"></div>
+            <div class="glow-orb glow-2"></div>
+            <div class="glow-orb glow-3"></div>
+        </div>
+    </section>
+
+    <!-- ═══ BMI Calculator Section ═══ -->
+    <section class="section" id="bmi">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-badge">📊 Body Mass Index</span>
+                <h2 class="section-title">BMI <span class="gradient-text">Calculator</span></h2>
+                <p class="section-subtitle">Enter your measurements to instantly calculate your BMI and understand your health category.</p>
+            </div>
+
+            <div class="bmi-layout">
+                <div class="card glass-card bmi-form-card">
+                    <form id="bmiForm" class="bmi-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="bmiWeight">Weight (kg)</label>
+                                <div class="input-wrapper">
+                                    <input type="number" id="bmiWeight" placeholder="70" min="20" max="300" step="0.1" required />
+                                    <span class="input-unit">kg</span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="bmiHeight">Height (cm)</label>
+                                <div class="input-wrapper">
+                                    <input type="number" id="bmiHeight" placeholder="175" min="100" max="250" step="0.1" required />
+                                    <span class="input-unit">cm</span>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block" id="bmiSubmitBtn">
+                            <span>Calculate BMI</span>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                        </button>
+                    </form>
+                </div>
+
+                <div class="card glass-card bmi-result-card" id="bmiResultCard" style="display:none;">
+                    <div class="bmi-result">
+                        <div class="bmi-score-ring">
+                            <svg viewBox="0 0 120 120" class="bmi-ring-svg">
+                                <circle cx="60" cy="60" r="52" class="ring-bg" />
+                                <circle cx="60" cy="60" r="52" class="ring-progress" id="bmiRingProgress" />
+                            </svg>
+                            <div class="bmi-score-text">
+                                <span class="bmi-value" id="bmiValue">0</span>
+                                <span class="bmi-label">BMI</span>
+                            </div>
+                        </div>
+                        <div class="bmi-info">
+                            <span class="bmi-category-badge" id="bmiCategoryBadge">—</span>
+                            <p class="bmi-description" id="bmiDescription">Enter your details to see your BMI result.</p>
+                        </div>
+                    </div>
+                    <div class="bmi-scale">
+                        <div class="scale-segment underweight"><span>Underweight</span><small>&lt;18.5</small></div>
+                        <div class="scale-segment normal"><span>Normal</span><small>18.5–24.9</small></div>
+                        <div class="scale-segment overweight"><span>Overweight</span><small>25–29.9</small></div>
+                        <div class="scale-segment obese"><span>Obese</span><small>≥30</small></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══ AI Workout Generator Section ═══ -->
+    <section class="section section-alt" id="workout">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-badge">🤖 AI-Powered</span>
+                <h2 class="section-title">Custom <span class="gradient-text">Workout Generator</span></h2>
+                <p class="section-subtitle">Our AI analyzes your BMI, fitness goals, and experience level to create a personalized training plan.</p>
+            </div>
+
+            <div class="workout-layout">
+                <div class="card glass-card workout-form-card">
+                    <form id="workoutForm" class="workout-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="wkWeight">Weight (kg)</label>
+                                <div class="input-wrapper">
+                                    <input type="number" id="wkWeight" placeholder="70" min="20" max="300" step="0.1" required />
+                                    <span class="input-unit">kg</span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="wkHeight">Height (cm)</label>
+                                <div class="input-wrapper">
+                                    <input type="number" id="wkHeight" placeholder="175" min="100" max="250" step="0.1" required />
+                                    <span class="input-unit">cm</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="wkAge">Age</label>
+                                <div class="input-wrapper">
+                                    <input type="number" id="wkAge" placeholder="25" min="14" max="80" required />
+                                    <span class="input-unit">yrs</span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="wkGoal">Fitness Goal</label>
+                                <select id="wkGoal" required>
+                                    <option value="weight_loss">🔥 Weight Loss</option>
+                                    <option value="muscle_gain">💪 Muscle Gain</option>
+                                    <option value="general_fitness" selected>🏃 General Fitness</option>
+                                    <option value="endurance">❤️ Endurance</option>
+                                    <option value="flexibility">🧘 Flexibility</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="wkLevel">Fitness Level</label>
+                                <div class="level-selector" id="levelSelector">
+                                    <button type="button" class="level-btn active" data-level="beginner">
+                                        <span class="level-icon">🌱</span>Beginner
+                                    </button>
+                                    <button type="button" class="level-btn" data-level="intermediate">
+                                        <span class="level-icon">⚡</span>Intermediate
+                                    </button>
+                                    <button type="button" class="level-btn" data-level="advanced">
+                                        <span class="level-icon">🔥</span>Advanced
+                                    </button>
+                                </div>
+                                <input type="hidden" id="wkLevel" value="beginner" />
+                            </div>
+                            <div class="form-group">
+                                <label for="wkSplit">Workout Split</label>
+                                <select id="wkSplit" required>
+                                    <option value="3" selected>3 Days / Week</option>
+                                    <option value="4">4 Days / Week</option>
+                                    <option value="5">5 Days / Week</option>
+                                    <option value="6">6 Days / Week</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block" id="workoutSubmitBtn">
+                            <span>Generate AI Workout</span>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v6M12 17v6M4.22 4.22l4.24 4.24M15.54 15.54l4.24 4.24M1 12h6M17 12h6M4.22 19.78l4.24-4.24M15.54 8.46l4.24-4.24"/></svg>
+                        </button>
+                    </form>
+                </div>
+
+                <div class="workout-results" id="workoutResults" style="display:none;">
+                    <div class="workout-summary card glass-card" id="workoutSummary"></div>
+                    <div class="table-container card glass-card mt-md" id="scheduleTableContainer">
+                        <table class="split-table" id="splitTable">
+                            <thead>
+                                <tr>
+                                    <th>Day</th>
+                                    <th>Focus</th>
+                                    <th>Exercises</th>
+                                </tr>
+                            </thead>
+                            <tbody id="splitTableBody">
+                                <!-- Dynamic rows generated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══ Dashboard Section ═══ -->
+    <section class="section" id="dashboard">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-badge">👤 Your Profile</span>
+                <h2 class="section-title">User <span class="gradient-text">Dashboard</span></h2>
+                <p class="section-subtitle">Your fitness profile, BMI history, and workout data.</p>
+            </div>
+
+            <div class="dashboard-layout">
+                <!-- Guest: login prompt -->
+                <div class="card glass-card profile-card" id="guestProfileCard">
+                    <div class="guest-prompt">
+                        <div class="guest-icon">👤</div>
+                        <h3 class="card-title">Login to Track Progress</h3>
+                        <p class="guest-text">Create an account or login to save your BMI history, workout plans, and fitness goals.</p>
+                        <a href="/login" class="btn btn-primary" id="dashboardLoginBtn">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+                            <span>Login / Sign Up</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Logged-in: user profile card -->
+                <div class="card glass-card profile-card hidden" id="loggedInProfileCard">
+                    <div class="profile-header">
+                        <div class="profile-avatar" id="profileAvatar">
+                            <span id="profileInitial">U</span>
+                        </div>
+                        <div class="profile-info">
+                            <h3 class="profile-name" id="profileName">User</h3>
+                            <p class="profile-email" id="profileEmail">user@email.com</p>
+                        </div>
+                    </div>
+                    <div class="profile-details">
+                        <div class="profile-stat">
+                            <span class="profile-stat-label">Age</span>
+                            <span class="profile-stat-value" id="profileAge">—</span>
+                        </div>
+                        <div class="profile-stat">
+                            <span class="profile-stat-label">Goal</span>
+                            <span class="profile-stat-value" id="profileGoal">—</span>
+                        </div>
+                        <div class="profile-stat">
+                            <span class="profile-stat-label">Level</span>
+                            <span class="profile-stat-value" id="profileLevel">—</span>
+                        </div>
+                        <div class="profile-stat">
+                            <span class="profile-stat-label">Joined</span>
+                            <span class="profile-stat-value" id="profileJoined">—</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card glass-card history-card" id="historyCard" style="display:none;">
+                    <h3 class="card-title">BMI History</h3>
+                    <div class="history-list" id="historyList">
+                        <p class="empty-state">No BMI records yet. Use the calculator to add entries.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══ Exercise Library Section ═══ -->
+    <section class="section section-alt" id="exercises">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-badge">🏋️ Library</span>
+                <h2 class="section-title">Exercise <span class="gradient-text">Library</span></h2>
+                <p class="section-subtitle">Browse our full collection of exercises, filterable by goal and difficulty.</p>
+            </div>
+
+            <div class="filter-bar">
+                <select id="filterGoal" class="filter-select">
+                    <option value="">All Goals</option>
+                    <option value="weight_loss">🔥 Weight Loss</option>
+                    <option value="muscle_gain">💪 Muscle Gain</option>
+                    <option value="general_fitness">🏃 General Fitness</option>
+                    <option value="endurance">❤️ Endurance</option>
+                    <option value="flexibility">🧘 Flexibility</option>
+                </select>
+                <select id="filterDifficulty" class="filter-select">
+                    <option value="">All Levels</option>
+                    <option value="beginner">🌱 Beginner</option>
+                    <option value="intermediate">⚡ Intermediate</option>
+                    <option value="advanced">🔥 Advanced</option>
+                </select>
+            </div>
+
+            <div class="exercise-library-grid" id="exerciseLibrary">
+                <div class="loading-spinner">
+                    <div class="spinner"></div>
+                    <p>Loading exercises…</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══ Footer ═══ -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <span class="brand-icon">⚡</span>
+                    <span class="brand-text">FitNova<span class="brand-ai">AI</span></span>
+                    <p class="footer-tagline">AI-powered fitness, for everyone.</p>
+                </div>
+                <div class="footer-links">
+                    <a href="#bmi">BMI Calculator</a>
+                    <a href="#workout">AI Workout</a>
+                    <a href="#dashboard">Dashboard</a>
+                    <a href="#exercises">Exercises</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 FitNovaAI. Built with ❤️ and AI.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ═══ Toast Container ═══ -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>
