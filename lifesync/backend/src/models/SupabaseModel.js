@@ -97,20 +97,21 @@ export class SupabaseModel {
   attachDocMethods(doc) {
     if (!doc) return null;
     const formatted = toCamelCase(doc);
+    let instance = formatted;
     if (this.DocClass && typeof this.DocClass === "function") {
       try {
-        const instance = new this.DocClass(formatted);
+        instance = new this.DocClass(formatted);
         Object.assign(instance, formatted);
-        return instance;
       } catch (e) {
-        // Fallback to formatted object if instantiating class fails
+        instance = formatted;
       }
     }
-    // Add generic save method to instance if doc doesn't have custom class
-    formatted.save = async () => {
-      return await this.findByIdAndUpdate(formatted._id || formatted.id, formatted, { new: true });
+    // Add generic save method to instance so document.save() updates Supabase
+    instance.save = async () => {
+      const docId = instance._id || instance.id;
+      return await this.findByIdAndUpdate(docId, instance, { new: true });
     };
-    return formatted;
+    return instance;
   }
 
   applySelect(doc, fieldsStr) {

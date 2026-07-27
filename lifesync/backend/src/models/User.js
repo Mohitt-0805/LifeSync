@@ -57,6 +57,12 @@ export class UserDoc {
       }
     );
   }
+
+  async save() {
+    const docId = this._id || this.id;
+    if (!docId) return this;
+    return await User.findByIdAndUpdate(docId, this, { new: true });
+  }
 }
 
 class UserModel extends SupabaseModel {
@@ -69,6 +75,20 @@ class UserModel extends SupabaseModel {
       data.password = await bcryptjs.hash(data.password, 10);
     }
     return await super.create(data);
+  }
+
+  async findByIdAndUpdate(id, update = {}, options = {}) {
+    if (update.password && !update.password.startsWith("$2")) {
+      update.password = await bcryptjs.hash(update.password, 10);
+    }
+    return await super.findByIdAndUpdate(id, update, options);
+  }
+
+  async findOneAndUpdate(query = {}, update = {}, options = {}) {
+    if (update.password && !update.password.startsWith("$2")) {
+      update.password = await bcryptjs.hash(update.password, 10);
+    }
+    return await super.findOneAndUpdate(query, update, options);
   }
 }
 
