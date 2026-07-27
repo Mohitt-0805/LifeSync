@@ -150,3 +150,47 @@ CREATE INDEX IF NOT EXISTS idx_habits_user_id ON habits(user_id);
 CREATE INDEX IF NOT EXISTS idx_expenses_user_id ON expenses(user_id);
 CREATE INDEX IF NOT EXISTS idx_notes_user_id ON notes(user_id);
 CREATE INDEX IF NOT EXISTS idx_events_user_id ON events(user_id);
+
+-- Enable Row Level Security (RLS) on all tables for Supabase compliance
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE tasks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE goals ENABLE ROW LEVEL SECURITY;
+ALTER TABLE goal_milestones ENABLE ROW LEVEL SECURITY;
+ALTER TABLE habits ENABLE ROW LEVEL SECURITY;
+ALTER TABLE habit_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE expenses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE notes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
+
+-- Create Policies allowing full database access for Express API
+DROP POLICY IF EXISTS "Allow service full access" ON users;
+CREATE POLICY "Allow service full access" ON users FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow service full access" ON tasks;
+CREATE POLICY "Allow service full access" ON tasks FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow service full access" ON goals;
+CREATE POLICY "Allow service full access" ON goals FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow service full access" ON goal_milestones;
+CREATE POLICY "Allow service full access" ON goal_milestones FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow service full access" ON habits;
+CREATE POLICY "Allow service full access" ON habits FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow service full access" ON habit_logs;
+CREATE POLICY "Allow service full access" ON habit_logs FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow service full access" ON expenses;
+CREATE POLICY "Allow service full access" ON expenses FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow service full access" ON notes;
+CREATE POLICY "Allow service full access" ON notes FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow service full access" ON events;
+CREATE POLICY "Allow service full access" ON events FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow service full access" ON notifications;
+CREATE POLICY "Allow service full access" ON notifications FOR ALL USING (true) WITH CHECK (true);
+
