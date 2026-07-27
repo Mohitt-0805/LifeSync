@@ -18,8 +18,8 @@ connectDB()
     const { initDeadlineReminderCron } = await import("./cron/deadlineReminder.cron.js");
     initDeadlineReminderCron();
 
-    app.listen(PORT, () => {
-      console.log(`⚙️ Server is running at port : ${PORT}`);
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(`⚙️ Server is running and listening at 0.0.0.0:${PORT}`);
     });
   })
   .catch((err) => {
