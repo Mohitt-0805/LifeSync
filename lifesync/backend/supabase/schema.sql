@@ -1,10 +1,10 @@
--- LifeSync Complete Supabase PostgreSQL Database Schema
--- Run this script in your Supabase SQL Editor (https://app.supabase.com -> SQL Editor)
+-- LifeSync Production Supabase PostgreSQL Database Schema
+-- Execute this script in your Supabase SQL Editor (https://app.supabase.com -> SQL Editor)
 
--- Enable UUID extension
+-- 1. Enable UUID Extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- 1. Users Table
+-- 2. Users Table
 CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(255) NOT NULL,
@@ -25,55 +25,62 @@ CREATE TABLE IF NOT EXISTS users (
     phone_number VARCHAR(50) DEFAULT '',
     whatsapp_opt_in BOOLEAN DEFAULT false,
     whatsapp_verified BOOLEAN DEFAULT false,
+    whatsapp_preferences JSONB DEFAULT '{"tasks":true,"goals":true,"events":true,"memberships":true}'::jsonb,
     currency VARCHAR(10) DEFAULT 'INR',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 2. Tasks Table
+-- 3. Tasks Table
 CREATE TABLE IF NOT EXISTS tasks (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
     title VARCHAR(255) NOT NULL,
-    description TEXT,
+    description TEXT DEFAULT '',
     status VARCHAR(50) DEFAULT 'todo',
     priority VARCHAR(50) DEFAULT 'medium',
+    category VARCHAR(100) DEFAULT 'personal',
     due_date TIMESTAMP WITH TIME ZONE,
-    tags TEXT[],
+    completed_at TIMESTAMP WITH TIME ZONE,
+    tags TEXT[] DEFAULT '{}',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 3. Goals Table
+-- 4. Goals Table
 CREATE TABLE IF NOT EXISTS goals (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
     title VARCHAR(255) NOT NULL,
-    description TEXT,
-    category VARCHAR(100) DEFAULT 'General',
+    description TEXT DEFAULT '',
+    category VARCHAR(100) DEFAULT 'career',
+    start_date TIMESTAMP WITH TIME ZONE,
     target_date TIMESTAMP WITH TIME ZONE,
     progress INT DEFAULT 0,
     status VARCHAR(50) DEFAULT 'not_started',
+    milestones JSONB DEFAULT '[]'::jsonb,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 4. Goal Milestones Table
+-- 5. Goal Milestones Table
 CREATE TABLE IF NOT EXISTS goal_milestones (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     goal_id UUID REFERENCES goals(id) ON DELETE CASCADE,
     title VARCHAR(255) NOT NULL,
     is_completed BOOLEAN DEFAULT false,
-    completed_at TIMESTAMP WITH TIME ZONE
+    completed_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 5. Habits Table
+-- 6. Habits Table
 CREATE TABLE IF NOT EXISTS habits (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
     title VARCHAR(255) NOT NULL,
-    description TEXT,
+    description TEXT DEFAULT '',
     frequency VARCHAR(50) DEFAULT 'daily',
+    target_days INT DEFAULT 1,
     streak INT DEFAULT 0,
     best_streak INT DEFAULT 0,
     is_active BOOLEAN DEFAULT true,
@@ -81,68 +88,32 @@ CREATE TABLE IF NOT EXISTS habits (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 6. Habit Logs Table
+-- 7. Habit Logs Table
 CREATE TABLE IF NOT EXISTS habit_logs (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     habit_id UUID REFERENCES habits(id) ON DELETE CASCADE,
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-    date DATE NOT NULL,
+    date VARCHAR(50) NOT NULL,
     status VARCHAR(50) DEFAULT 'completed',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 7. Expenses Table
+-- 8. Expenses Table
 CREATE TABLE IF NOT EXISTS expenses (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-    title VARCHAR(255) NOT NULL,
+    title VARCHAR(255),
     amount NUMERIC(12, 2) NOT NULL,
     type VARCHAR(50) DEFAULT 'expense',
     category VARCHAR(100) DEFAULT 'General',
+    description TEXT DEFAULT '',
     date TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    notes TEXT,
+    notes TEXT DEFAULT '',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 8. Notes Table
-CREATE TABLE IF NOT EXISTS notes (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-    title VARCHAR(255) NOT NULL,
-    content TEXT,
-    category VARCHAR(100) DEFAULT 'General',
-    is_pinned BOOLEAN DEFAULT false,
-    tags TEXT[],
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- 9. Events Table
-CREATE TABLE IF NOT EXISTS events (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-    title VARCHAR(255) NOT NULL,
-    description TEXT,
-    start_time TIMESTAMP WITH TIME ZONE NOT NULL,
-    end_time TIMESTAMP WITH TIME ZONE NOT NULL,
-    category VARCHAR(100) DEFAULT 'Personal',
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- 10. Notifications Table
-CREATE TABLE IF NOT EXISTS notifications (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-    title VARCHAR(255) NOT NULL,
-    message TEXT NOT NULL,
-    type VARCHAR(50) DEFAULT 'info',
-    is_read BOOLEAN DEFAULT false,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- 11. Budgets Table
+-- 9. Budgets Table
 CREATE TABLE IF NOT EXISTS budgets (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
@@ -155,7 +126,49 @@ CREATE TABLE IF NOT EXISTS budgets (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 12. Activities Table
+-- 10. Notes Table
+CREATE TABLE IF NOT EXISTS notes (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    title VARCHAR(255) NOT NULL DEFAULT 'Untitled',
+    content TEXT DEFAULT '',
+    folder VARCHAR(100) DEFAULT 'General',
+    category VARCHAR(100) DEFAULT 'General',
+    is_pinned BOOLEAN DEFAULT false,
+    tags TEXT[] DEFAULT '{}',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 11. Events Table
+CREATE TABLE IF NOT EXISTS events (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    title VARCHAR(255) NOT NULL,
+    description TEXT DEFAULT '',
+    start_date TIMESTAMP WITH TIME ZONE,
+    end_date TIMESTAMP WITH TIME ZONE,
+    start_time TIMESTAMP WITH TIME ZONE,
+    end_time TIMESTAMP WITH TIME ZONE,
+    is_all_day BOOLEAN DEFAULT false,
+    reminders TEXT[] DEFAULT '{}',
+    category VARCHAR(100) DEFAULT 'general',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 12. Notifications Table
+CREATE TABLE IF NOT EXISTS notifications (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    title VARCHAR(255) NOT NULL,
+    message TEXT NOT NULL,
+    type VARCHAR(50) DEFAULT 'info',
+    is_read BOOLEAN DEFAULT false,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 13. Activities Table
 CREATE TABLE IF NOT EXISTS activities (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
@@ -167,25 +180,25 @@ CREATE TABLE IF NOT EXISTS activities (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 13. Achievements Table
+-- 14. Achievements Table
 CREATE TABLE IF NOT EXISTS achievements (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
     title VARCHAR(255) NOT NULL,
-    description TEXT,
+    description TEXT DEFAULT '',
     badge_icon VARCHAR(255),
     unlocked_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     xp_reward INT DEFAULT 0,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 14. Courses Table
+-- 15. Courses Table
 CREATE TABLE IF NOT EXISTS courses (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     title VARCHAR(255) NOT NULL,
     slug VARCHAR(255) UNIQUE,
-    description TEXT,
-    category VARCHAR(100) DEFAULT 'General',
+    description TEXT DEFAULT '',
+    category VARCHAR(100) DEFAULT 'finance',
     level VARCHAR(50) DEFAULT 'beginner',
     cover_emoji VARCHAR(50) DEFAULT '📚',
     accent_color VARCHAR(50) DEFAULT '#8B5CF6',
@@ -198,13 +211,13 @@ CREATE TABLE IF NOT EXISTS courses (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 15. Lessons Table
+-- 16. Lessons Table
 CREATE TABLE IF NOT EXISTS lessons (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     course_id UUID REFERENCES courses(id) ON DELETE CASCADE,
     title VARCHAR(255) NOT NULL,
     slug VARCHAR(255),
-    content TEXT,
+    content TEXT DEFAULT '',
     order_index INT DEFAULT 0,
     estimated_read_time INT DEFAULT 5,
     quiz JSONB DEFAULT '[]'::jsonb,
@@ -213,7 +226,7 @@ CREATE TABLE IF NOT EXISTS lessons (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 16. User Lesson Progress Table
+-- 17. User Lesson Progress Table
 CREATE TABLE IF NOT EXISTS user_lesson_progress (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
@@ -227,7 +240,7 @@ CREATE TABLE IF NOT EXISTS user_lesson_progress (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 17. Message Logs Table
+-- 18. Message Logs Table
 CREATE TABLE IF NOT EXISTS message_logs (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
@@ -240,7 +253,7 @@ CREATE TABLE IF NOT EXISTS message_logs (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 18. Class Schedules Table
+-- 19. Class Schedules Table
 CREATE TABLE IF NOT EXISTS class_schedules (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
@@ -255,7 +268,7 @@ CREATE TABLE IF NOT EXISTS class_schedules (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 19. Focus Sessions Table
+-- 20. Focus Sessions Table
 CREATE TABLE IF NOT EXISTS focus_sessions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
@@ -268,7 +281,33 @@ CREATE TABLE IF NOT EXISTS focus_sessions (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Indexes for lightning fast queries
+-- Add Columns if table already exists (Schema Auto-Repair Migration)
+DO $$
+BEGIN
+    -- users table columns
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='whatsapp_preferences') THEN
+        ALTER TABLE users ADD COLUMN whatsapp_preferences JSONB DEFAULT '{"tasks":true,"goals":true,"events":true,"memberships":true}'::jsonb;
+    END IF;
+    -- tasks table columns
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='tasks' AND column_name='category') THEN
+        ALTER TABLE tasks ADD COLUMN category VARCHAR(100) DEFAULT 'personal';
+    END IF;
+    -- events table columns
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='events' AND column_name='start_date') THEN
+        ALTER TABLE events ADD COLUMN start_date TIMESTAMP WITH TIME ZONE;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='events' AND column_name='end_date') THEN
+        ALTER TABLE events ADD COLUMN end_date TIMESTAMP WITH TIME ZONE;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='events' AND column_name='is_all_day') THEN
+        ALTER TABLE events ADD COLUMN is_all_day BOOLEAN DEFAULT false;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='events' AND column_name='reminders') THEN
+        ALTER TABLE events ADD COLUMN reminders TEXT[] DEFAULT '{}';
+    END IF;
+END $$;
+
+-- Indexes for performance optimization
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_tasks_user_id ON tasks(user_id);
 CREATE INDEX IF NOT EXISTS idx_goals_user_id ON goals(user_id);
@@ -277,7 +316,7 @@ CREATE INDEX IF NOT EXISTS idx_expenses_user_id ON expenses(user_id);
 CREATE INDEX IF NOT EXISTS idx_notes_user_id ON notes(user_id);
 CREATE INDEX IF NOT EXISTS idx_events_user_id ON events(user_id);
 
--- Enable Row Level Security (RLS) on all tables for Supabase compliance
+-- Enable Row Level Security (RLS) on all tables
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE tasks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE goals ENABLE ROW LEVEL SECURITY;
@@ -298,7 +337,7 @@ ALTER TABLE message_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE class_schedules ENABLE ROW LEVEL SECURITY;
 ALTER TABLE focus_sessions ENABLE ROW LEVEL SECURITY;
 
--- Create Policies allowing full database access for Express API
+-- Allow full access policies for backend service operations
 DROP POLICY IF EXISTS "Allow service full access" ON users;
 CREATE POLICY "Allow service full access" ON users FOR ALL USING (true) WITH CHECK (true);
 
@@ -355,5 +394,3 @@ CREATE POLICY "Allow service full access" ON class_schedules FOR ALL USING (true
 
 DROP POLICY IF EXISTS "Allow service full access" ON focus_sessions;
 CREATE POLICY "Allow service full access" ON focus_sessions FOR ALL USING (true) WITH CHECK (true);
-
-
