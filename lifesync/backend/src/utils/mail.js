@@ -2,31 +2,37 @@ import nodemailer from "nodemailer";
 
 const sendEmail = async ({ to, subject, html }) => {
   try {
-    // If SMTP details are placeholders, print directly to console (useful for development)
-    if (
-      process.env.SMTP_USER === "smtp_user_placeholder" ||
-      !process.env.SMTP_USER ||
-      !process.env.SMTP_HOST
-    ) {
+    const smtpUser = process.env.SMTP_USER?.trim();
+    const rawPass = process.env.SMTP_PASS?.trim() || "";
+    // Strip spaces from Google App Passwords (e.g. "hpkm mkem jdor nuci" -> "hpkmmkemjdornuci")
+    const smtpPass = rawPass.replace(/\s+/g, "");
+    const smtpHost = process.env.SMTP_HOST?.trim() || "smtp.gmail.com";
+
+    // If SMTP details are missing or placeholders, fallback to console log
+    if (!smtpUser || smtpUser === "smtp_user_placeholder" || !smtpPass) {
       console.log("\n✉️  [LOCAL MAIL CAPTURE] -----------------------");
       console.log(`Subject: ${subject}`);
       console.log(`To:      ${to}`);
-      console.log(`Body:\n${html.replace(/<[^>]*>/g, "")}`); // strip HTML for console view
+      console.log(`Body:\n${html.replace(/<[^>]*>/g, "")}`);
       console.log("-----------------------------------------------\n");
       return { success: true, loggedOnConsole: true };
     }
 
     const port = parseInt(process.env.SMTP_PORT) || 587;
-    const isGmail = process.env.SMTP_HOST?.toLowerCase().includes("gmail");
+    const isGmail = smtpHost.toLowerCase().includes("gmail");
 
     const transporterOptions = {
-      host: process.env.SMTP_HOST,
+      host: smtpHost,
       port: port,
-      secure: port === 465, // true for 465, false for other ports (587)
+      secure: port === 465,
       auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
+        user: smtpUser,
+        pass: smtpPass,
       },
+      tls: {
+        rejectUnauthorized: false,
+      },
+      connectionTimeout: 10000,
     };
 
     if (isGmail) {
@@ -36,16 +42,16 @@ const sendEmail = async ({ to, subject, html }) => {
     const transporter = nodemailer.createTransport(transporterOptions);
 
     const info = await transporter.sendMail({
-      from: `LifeSync <${process.env.FROM_EMAIL || process.env.SMTP_USER}>`,
+      from: `LifeSync <${process.env.FROM_EMAIL || smtpUser}>`,
       to,
       subject,
       html,
     });
 
-    console.log(`Email sent successfully: ${info.messageId}`);
+    console.log(`✅ Email sent successfully to ${to} (MessageId: ${info.messageId})`);
     return info;
   } catch (error) {
-    console.error("Nodemailer send failed, falling back to console log. Error: ", error);
+    console.error("❌ Nodemailer send failed, falling back to console log. Error:", error.message || error);
     console.log("\n✉️  [FALLBACK MAIL CAPTURE] --------------------");
     console.log(`Subject: ${subject}`);
     console.log(`To:      ${to}`);
@@ -56,6 +62,7 @@ const sendEmail = async ({ to, subject, html }) => {
 };
 
 const sendOtpEmail = async (to, otp, purpose = "Verification") => {
+  console.log(`\n🔑 [OTP DISPATCH] Recipient: ${to} | Purpose: ${purpose} | OTP Code: ${otp}\n`);
   const subject = `Your LifeSync OTP Code: ${otp}`;
   const html = `
     <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #FAF6F0; padding: 40px 20px; text-align: center;">

@@ -63,8 +63,12 @@ const registerUser = asyncHandler(async (req, res) => {
     });
   }
 
-  // Dispatch OTP Email
-  await sendOtpEmail(email, otp, "Signup Verification");
+  // Dispatch OTP Email (with graceful logging)
+  try {
+    await sendOtpEmail(email, otp, "Signup Verification");
+  } catch (emailError) {
+    console.error("⚠️ OTP email dispatch error:", emailError.message || emailError);
+  }
 
   return res.status(200).json(
     new ApiResponse(
@@ -145,7 +149,11 @@ const sendOtp = asyncHandler(async (req, res) => {
     await user.save({ validateBeforeSave: false });
   }
 
-  await sendOtpEmail(email, otp, purpose);
+  try {
+    await sendOtpEmail(email, otp, purpose);
+  } catch (emailError) {
+    console.error("⚠️ OTP email dispatch error:", emailError.message || emailError);
+  }
 
   return res.status(200).json(
     new ApiResponse(
@@ -220,7 +228,11 @@ const resendOtp = asyncHandler(async (req, res) => {
   user.otpExpire = otpExpire;
   await user.save({ validateBeforeSave: false });
 
-  await sendOtpEmail(email, otp, purpose);
+  try {
+    await sendOtpEmail(email, otp, purpose);
+  } catch (emailError) {
+    console.error("⚠️ OTP email dispatch error:", emailError.message || emailError);
+  }
 
   return res.status(200).json(
     new ApiResponse(
