@@ -48,7 +48,7 @@ const applySelect = (doc, fieldsStr) => {
 };
 
 // ─── MockDoc base class ───────────────────────────────────────────────────────
-class MockDoc {
+export class MockDoc {
   constructor(fields, storeKey) {
     Object.assign(this, fields);
     // Allow _storeKey to come from the fields (stored docs) or explicit param
@@ -292,7 +292,7 @@ class MockSingleQuery {
 }
 
 // ─── MockModelBase ─────────────────────────────────────────────────────────────
-class MockModelBase {
+export class MockModelBase {
   constructor(storeKey, DocClass = MockDoc) {
     this.storeKey = storeKey;
     this.DocClass = DocClass;

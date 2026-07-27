@@ -142,6 +142,132 @@ CREATE TABLE IF NOT EXISTS notifications (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- 11. Budgets Table
+CREATE TABLE IF NOT EXISTS budgets (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    category VARCHAR(100) NOT NULL,
+    amount NUMERIC(12, 2) NOT NULL,
+    period VARCHAR(50) DEFAULT 'monthly',
+    start_date TIMESTAMP WITH TIME ZONE,
+    end_date TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 12. Activities Table
+CREATE TABLE IF NOT EXISTS activities (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    action VARCHAR(255) NOT NULL,
+    entity_type VARCHAR(100),
+    entity_id VARCHAR(255),
+    details JSONB DEFAULT '{}'::jsonb,
+    xp_earned INT DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 13. Achievements Table
+CREATE TABLE IF NOT EXISTS achievements (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    badge_icon VARCHAR(255),
+    unlocked_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    xp_reward INT DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 14. Courses Table
+CREATE TABLE IF NOT EXISTS courses (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    title VARCHAR(255) NOT NULL,
+    slug VARCHAR(255) UNIQUE,
+    description TEXT,
+    category VARCHAR(100) DEFAULT 'General',
+    level VARCHAR(50) DEFAULT 'beginner',
+    cover_emoji VARCHAR(50) DEFAULT '📚',
+    accent_color VARCHAR(50) DEFAULT '#8B5CF6',
+    order_index INT DEFAULT 0,
+    total_lessons INT DEFAULT 0,
+    total_xp INT DEFAULT 0,
+    difficulty VARCHAR(50) DEFAULT 'beginner',
+    is_published BOOLEAN DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 15. Lessons Table
+CREATE TABLE IF NOT EXISTS lessons (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    course_id UUID REFERENCES courses(id) ON DELETE CASCADE,
+    title VARCHAR(255) NOT NULL,
+    slug VARCHAR(255),
+    content TEXT,
+    order_index INT DEFAULT 0,
+    estimated_read_time INT DEFAULT 5,
+    quiz JSONB DEFAULT '[]'::jsonb,
+    xp_reward INT DEFAULT 25,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 16. User Lesson Progress Table
+CREATE TABLE IF NOT EXISTS user_lesson_progress (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    lesson_id UUID REFERENCES lessons(id) ON DELETE CASCADE,
+    course_id UUID REFERENCES courses(id) ON DELETE CASCADE,
+    completed BOOLEAN DEFAULT false,
+    quiz_score INT,
+    xp_awarded INT DEFAULT 0,
+    completed_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 17. Message Logs Table
+CREATE TABLE IF NOT EXISTS message_logs (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    type VARCHAR(100) NOT NULL,
+    recipient VARCHAR(255) NOT NULL,
+    message TEXT NOT NULL,
+    status VARCHAR(50) DEFAULT 'sent',
+    error TEXT DEFAULT '',
+    sent_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 18. Class Schedules Table
+CREATE TABLE IF NOT EXISTS class_schedules (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    subject_name VARCHAR(255) NOT NULL,
+    day_of_week VARCHAR(20) NOT NULL,
+    start_time VARCHAR(20) NOT NULL,
+    end_time VARCHAR(20) NOT NULL,
+    room VARCHAR(100) DEFAULT '',
+    color VARCHAR(50) DEFAULT '#3b6cff',
+    recurring BOOLEAN DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 19. Focus Sessions Table
+CREATE TABLE IF NOT EXISTS focus_sessions (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    started_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    ended_at TIMESTAMP WITH TIME ZONE,
+    duration_minutes INT NOT NULL,
+    completed BOOLEAN DEFAULT false,
+    linked_task_id UUID REFERENCES tasks(id) ON DELETE SET NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Indexes for lightning fast queries
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_tasks_user_id ON tasks(user_id);
@@ -159,9 +285,18 @@ ALTER TABLE goal_milestones ENABLE ROW LEVEL SECURITY;
 ALTER TABLE habits ENABLE ROW LEVEL SECURITY;
 ALTER TABLE habit_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE expenses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE budgets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE activities ENABLE ROW LEVEL SECURITY;
+ALTER TABLE achievements ENABLE ROW LEVEL SECURITY;
+ALTER TABLE courses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE lessons ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_lesson_progress ENABLE ROW LEVEL SECURITY;
+ALTER TABLE message_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE class_schedules ENABLE ROW LEVEL SECURITY;
+ALTER TABLE focus_sessions ENABLE ROW LEVEL SECURITY;
 
 -- Create Policies allowing full database access for Express API
 DROP POLICY IF EXISTS "Allow service full access" ON users;
@@ -185,6 +320,9 @@ CREATE POLICY "Allow service full access" ON habit_logs FOR ALL USING (true) WIT
 DROP POLICY IF EXISTS "Allow service full access" ON expenses;
 CREATE POLICY "Allow service full access" ON expenses FOR ALL USING (true) WITH CHECK (true);
 
+DROP POLICY IF EXISTS "Allow service full access" ON budgets;
+CREATE POLICY "Allow service full access" ON budgets FOR ALL USING (true) WITH CHECK (true);
+
 DROP POLICY IF EXISTS "Allow service full access" ON notes;
 CREATE POLICY "Allow service full access" ON notes FOR ALL USING (true) WITH CHECK (true);
 
@@ -193,4 +331,29 @@ CREATE POLICY "Allow service full access" ON events FOR ALL USING (true) WITH CH
 
 DROP POLICY IF EXISTS "Allow service full access" ON notifications;
 CREATE POLICY "Allow service full access" ON notifications FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow service full access" ON activities;
+CREATE POLICY "Allow service full access" ON activities FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow service full access" ON achievements;
+CREATE POLICY "Allow service full access" ON achievements FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow service full access" ON courses;
+CREATE POLICY "Allow service full access" ON courses FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow service full access" ON lessons;
+CREATE POLICY "Allow service full access" ON lessons FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow service full access" ON user_lesson_progress;
+CREATE POLICY "Allow service full access" ON user_lesson_progress FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow service full access" ON message_logs;
+CREATE POLICY "Allow service full access" ON message_logs FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow service full access" ON class_schedules;
+CREATE POLICY "Allow service full access" ON class_schedules FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow service full access" ON focus_sessions;
+CREATE POLICY "Allow service full access" ON focus_sessions FOR ALL USING (true) WITH CHECK (true);
+
 

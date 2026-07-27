@@ -1,16 +1,24 @@
-import mongoose from "mongoose";
+import { supabase, isSupabaseConfigured } from "./supabase.js";
 
 const connectDB = async () => {
   if (process.env.USE_MOCK_DB === "true") {
-    console.log(`\n⚠️  Running in mock in-memory DB mode (no local MongoDB connection required)`);
+    console.log(`\n⚠️  Running in Mock DB mode (no external database required)`);
     return;
   }
+
+  if (!isSupabaseConfigured()) {
+    console.warn(`\n⚠️  Supabase URL/Key not configured in environment. Defaulting to in-memory mode.`);
+    return;
+  }
+
   try {
-    const connectionInstance = await mongoose.connect(process.env.MONGO_URI || "mongodb://localhost:27017/lifesync");
-    console.log(`\n MongoDB Connected! DB Host: ${connectionInstance.connection.host}`);
+    const { error } = await supabase.from("users").select("id").limit(1);
+    if (error && error.code !== "PGRST116" && !error.message?.includes("0 rows")) {
+      console.warn(`⚠️  Supabase table warning (schema may need initialization): ${error.message}`);
+    }
+    console.log(`\n⚡ Connected to Supabase PostgreSQL Cloud Database!`);
   } catch (error) {
-    console.error("MONGODB connection error: ", error);
-    process.exit(1);
+    console.error("Supabase connection check failed: ", error.message || error);
   }
 };
 

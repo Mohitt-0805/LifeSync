@@ -4,7 +4,6 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { rewardXP, checkAndUnlockAchievement } from "../utils/gamification.js";
-import mongoose from "mongoose";
 
 // Create Expense / Income
 const createExpense = asyncHandler(async (req, res) => {
