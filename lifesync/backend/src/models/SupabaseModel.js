@@ -9,7 +9,12 @@ export const toSnakeCase = (obj) => {
   const snakeObj = {};
   for (const key of Object.keys(obj)) {
     if (key.startsWith("$")) continue; // Skip MongoDB operator keys if passed
-    const snakeKey = key.replace(/([A-Z])/g, "_$1").toLowerCase();
+    let snakeKey;
+    if (key === "_id") {
+      snakeKey = "id";
+    } else {
+      snakeKey = key.replace(/([A-Z])/g, "_$1").toLowerCase();
+    }
     snakeObj[snakeKey] = obj[key];
   }
   return snakeObj;

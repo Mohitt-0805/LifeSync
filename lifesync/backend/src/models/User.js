@@ -32,9 +32,11 @@ export class UserDoc {
   }
 
   generateAccessToken() {
+    const userId = this.id || this._id;
     return jwt.sign(
       {
-        _id: this._id || this.id,
+        id: userId,
+        _id: userId,
         email: this.email,
         name: this.name,
         role: this.role,
@@ -47,9 +49,11 @@ export class UserDoc {
   }
 
   generateRefreshToken() {
+    const userId = this.id || this._id;
     return jwt.sign(
       {
-        _id: this._id || this.id,
+        id: userId,
+        _id: userId,
       },
       process.env.JWT_REFRESH_SECRET || "lifesync_refresh_secret_key_983749837492",
       {
