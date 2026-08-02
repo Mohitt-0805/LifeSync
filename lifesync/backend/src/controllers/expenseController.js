@@ -195,7 +195,7 @@ const getExpenseStats = asyncHandler(async (req, res) => {
         category: item._id,
         limit: budget.amount,
         spent: item.spent,
-        message: `Warning: You have exceeded your $${budget.amount} budget for ${item._id}! Spent: $${item.spent}`,
+        message: `Warning: You have exceeded your ₹${budget.amount} budget for ${item._id}! Spent: ₹${item.spent}`,
       });
     }
   });
