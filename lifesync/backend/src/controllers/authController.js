@@ -124,7 +124,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
   try {
     const decodedToken = jwt.verify(
       incomingRefreshToken,
-      process.env.JWT_REFRESH_SECRET
+      process.env.JWT_REFRESH_SECRET || "lifesync_refresh_secret_key_983749837492"
     );
 
     const user = await User.findById(decodedToken?._id);

@@ -13,7 +13,10 @@ const verifyJWT = asyncHandler(async (req, res, next) => {
       throw new ApiError(401, "Unauthorized request");
     }
 
-    const decodedToken = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
+    const decodedToken = jwt.verify(
+      token,
+      process.env.JWT_ACCESS_SECRET || "lifesync_access_secret_key_384729384729"
+    );
 
     const userId = decodedToken?.id || decodedToken?._id;
     const user = await User.findById(userId).select("-password -refreshToken -verificationToken -resetPasswordToken -resetPasswordExpire");
