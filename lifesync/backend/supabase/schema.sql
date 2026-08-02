@@ -91,7 +91,8 @@ CREATE TABLE IF NOT EXISTS habit_logs (
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
     date VARCHAR(50) NOT NULL,
     status VARCHAR(50) DEFAULT 'completed',
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- 8. Expenses Table
@@ -353,6 +354,10 @@ BEGIN
     -- tasks table columns
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='tasks' AND column_name='completed_at') THEN
         ALTER TABLE tasks ADD COLUMN completed_at TIMESTAMP WITH TIME ZONE;
+    END IF;
+    -- habit_logs table columns
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='habit_logs' AND column_name='updated_at') THEN
+        ALTER TABLE habit_logs ADD COLUMN updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
     END IF;
 END $$;
 
