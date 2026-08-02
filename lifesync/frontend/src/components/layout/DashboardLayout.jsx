@@ -222,7 +222,7 @@ export default function DashboardLayout() {
               className="flex items-center gap-2 px-4 py-2 border-2 border-black dark:border-white rounded-2xl hover:bg-cream-dark dark:hover:bg-navy-800 text-gray-500 dark:text-gray-300 transition-colors font-heading text-sm font-bold active-press"
             >
               <Search size={16} />
-              <span>Search (⌘K)</span>
+              <span>Search</span>
             </button>
 
             {/* Notification Bell */}
