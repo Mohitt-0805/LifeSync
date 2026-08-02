@@ -5,7 +5,7 @@ import { useVerifyOtpMutation, useResendOtpMutation } from "./authApi";
 import { setCredentials } from "./authSlice";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
-import { KeyRound, ArrowLeft, RefreshCw, CheckCircle2 } from "lucide-react";
+import { KeyRound, ArrowLeft, RefreshCw, CheckCircle2, AlertTriangle } from "lucide-react";
 
 export default function VerifyOtp() {
   const location = useLocation();
@@ -17,6 +17,7 @@ export default function VerifyOtp() {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [error, setError] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
+  const [emailWarning, setEmailWarning] = useState(location.state?.emailWarning || "");
   const [timer, setTimer] = useState(60);
   const [canResend, setCanResend] = useState(false);
 
@@ -115,8 +116,14 @@ export default function VerifyOtp() {
     setSuccessMsg("");
 
     try {
-      await resendOtp({ email, purpose: "Verification" }).unwrap();
-      setSuccessMsg("A fresh 6-digit OTP has been sent to your email!");
+      const res = await resendOtp({ email, purpose: "Verification" }).unwrap();
+      if (res.data?.emailWarning) {
+        setEmailWarning(res.data.emailWarning);
+        setSuccessMsg("");
+      } else {
+        setEmailWarning("");
+        setSuccessMsg("A fresh 6-digit OTP has been sent to your email!");
+      }
       setTimer(60);
       setCanResend(false);
       setOtp(["", "", "", "", "", ""]);
@@ -146,6 +153,13 @@ export default function VerifyOtp() {
             {email || "your email"}
           </p>
         </div>
+
+        {emailWarning && (
+          <div className="p-3 mb-4 bg-amber-50 border-2 border-amber-400 text-amber-800 rounded-xl font-heading text-sm font-bold text-center flex items-center justify-center gap-2">
+            <AlertTriangle size={18} className="flex-shrink-0" />
+            <span>{emailWarning}</span>
+          </div>
+        )}
 
         {error && (
           <div className="p-3 mb-4 bg-red-100 border-2 border-black text-red-700 rounded-xl font-heading text-sm font-bold text-center">

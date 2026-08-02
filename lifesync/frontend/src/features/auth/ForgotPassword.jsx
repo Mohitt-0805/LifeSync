@@ -4,12 +4,13 @@ import { useForgotPasswordMutation } from "./authApi";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { Card } from "../../components/ui/Card";
-import { KeyRound, ArrowLeft, MailCheck } from "lucide-react";
+import { KeyRound, ArrowLeft, MailCheck, AlertTriangle } from "lucide-react";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const [emailWarning, setEmailWarning] = useState("");
 
   const [forgotPassword, { isLoading }] = useForgotPasswordMutation();
 
@@ -23,8 +24,11 @@ export default function ForgotPassword() {
     }
 
     try {
-      await forgotPassword({ email }).unwrap();
+      const res = await forgotPassword({ email }).unwrap();
       setSuccess(true);
+      if (res.data?.emailWarning) {
+        setEmailWarning(res.data.emailWarning);
+      }
     } catch (err) {
       console.error(err);
       setError(err?.data?.message || "Something went wrong. Please verify the email.");
@@ -48,6 +52,12 @@ export default function ForgotPassword() {
             <div className="p-3 bg-yellow-50 border-2 border-dashed border-yellow-500 text-yellow-800 rounded-xl text-xs font-heading font-bold">
               Tip: For local development, check the backend console log for the reset link!
             </div>
+            {emailWarning && (
+              <div className="p-3 bg-amber-50 border-2 border-amber-400 text-amber-800 rounded-xl font-heading text-sm font-bold text-center flex items-center justify-center gap-2">
+                <AlertTriangle size={16} className="flex-shrink-0" />
+                <span>{emailWarning}</span>
+              </div>
+            )}
             <div className="pt-2">
               <Link to="/login">
                 <Button variant="secondary" className="w-full">

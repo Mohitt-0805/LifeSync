@@ -15,7 +15,7 @@ const sendEmail = async ({ to, subject, html }) => {
       console.log(`To:      ${to}`);
       console.log(`Body:\n${html.replace(/<[^>]*>/g, "")}`);
       console.log("-----------------------------------------------\n");
-      return { success: true, loggedOnConsole: true };
+      return { delivered: false, reason: "no_smtp_config", loggedOnConsole: true };
     }
 
     const port = parseInt(process.env.SMTP_PORT) || 587;
@@ -49,7 +49,7 @@ const sendEmail = async ({ to, subject, html }) => {
     });
 
     console.log(`✅ Email sent successfully to ${to} (MessageId: ${info.messageId})`);
-    return info;
+    return { ...info, delivered: true };
   } catch (error) {
     console.error("❌ Nodemailer send failed, falling back to console log. Error:", error.message || error);
     console.log("\n✉️  [FALLBACK MAIL CAPTURE] --------------------");
@@ -57,7 +57,7 @@ const sendEmail = async ({ to, subject, html }) => {
     console.log(`To:      ${to}`);
     console.log(`Body:\n${html.replace(/<[^>]*>/g, "")}`);
     console.log("-----------------------------------------------\n");
-    return { success: true, loggedOnConsole: true };
+    return { delivered: false, reason: "smtp_error", error: error.message || String(error), loggedOnConsole: true };
   }
 };
 

@@ -63,18 +63,29 @@ const registerUser = asyncHandler(async (req, res) => {
     });
   }
 
-  // Dispatch OTP Email (with graceful logging)
+  // Dispatch OTP Email and track delivery
+  let emailDelivered = false;
+  let emailWarning = null;
   try {
-    await sendOtpEmail(email, otp, "Signup Verification");
+    const emailResult = await sendOtpEmail(email, otp, "Signup Verification");
+    emailDelivered = emailResult?.delivered === true;
+    if (!emailDelivered) {
+      emailWarning = emailResult?.reason === "no_smtp_config"
+        ? "Email service is not configured. OTP was logged on the server console."
+        : `Email delivery failed: ${emailResult?.error || "Unknown error"}. OTP was logged on the server console.`;
+    }
   } catch (emailError) {
     console.error("⚠️ OTP email dispatch error:", emailError.message || emailError);
+    emailWarning = `Email delivery failed: ${emailError.message || "Unknown error"}`;
   }
 
   return res.status(200).json(
     new ApiResponse(
       200,
-      { requiresOtp: true, email: user.email },
-      "Registration initiated. Verification OTP sent to your email."
+      { requiresOtp: true, email: user.email, emailDelivered, ...(emailWarning && { emailWarning }) },
+      emailDelivered
+        ? "Registration initiated. Verification OTP sent to your email."
+        : "Registration initiated. OTP generated but email delivery failed — check server logs."
     )
   );
 });
@@ -149,17 +160,28 @@ const sendOtp = asyncHandler(async (req, res) => {
     await user.save({ validateBeforeSave: false });
   }
 
+  let emailDelivered = false;
+  let emailWarning = null;
   try {
-    await sendOtpEmail(email, otp, purpose);
+    const emailResult = await sendOtpEmail(email, otp, purpose);
+    emailDelivered = emailResult?.delivered === true;
+    if (!emailDelivered) {
+      emailWarning = emailResult?.reason === "no_smtp_config"
+        ? "Email service is not configured. OTP was logged on the server console."
+        : `Email delivery failed: ${emailResult?.error || "Unknown error"}. OTP was logged on the server console.`;
+    }
   } catch (emailError) {
     console.error("⚠️ OTP email dispatch error:", emailError.message || emailError);
+    emailWarning = `Email delivery failed: ${emailError.message || "Unknown error"}`;
   }
 
   return res.status(200).json(
     new ApiResponse(
       200,
-      { email, sent: true },
-      "OTP code has been sent to your email."
+      { email, sent: true, emailDelivered, ...(emailWarning && { emailWarning }) },
+      emailDelivered
+        ? "OTP code has been sent to your email."
+        : "OTP generated but email delivery failed — check server logs."
     )
   );
 });
@@ -228,17 +250,28 @@ const resendOtp = asyncHandler(async (req, res) => {
   user.otpExpire = otpExpire;
   await user.save({ validateBeforeSave: false });
 
+  let emailDelivered = false;
+  let emailWarning = null;
   try {
-    await sendOtpEmail(email, otp, purpose);
+    const emailResult = await sendOtpEmail(email, otp, purpose);
+    emailDelivered = emailResult?.delivered === true;
+    if (!emailDelivered) {
+      emailWarning = emailResult?.reason === "no_smtp_config"
+        ? "Email service is not configured. OTP was logged on the server console."
+        : `Email delivery failed: ${emailResult?.error || "Unknown error"}. OTP was logged on the server console.`;
+    }
   } catch (emailError) {
     console.error("⚠️ OTP email dispatch error:", emailError.message || emailError);
+    emailWarning = `Email delivery failed: ${emailError.message || "Unknown error"}`;
   }
 
   return res.status(200).json(
     new ApiResponse(
       200,
-      { email, resent: true },
-      "A new OTP has been dispatched to your email"
+      { email, resent: true, emailDelivered, ...(emailWarning && { emailWarning }) },
+      emailDelivered
+        ? "A new OTP has been dispatched to your email."
+        : "OTP regenerated but email delivery failed — check server logs."
     )
   );
 });
@@ -365,13 +398,24 @@ const forgotPassword = asyncHandler(async (req, res) => {
     <p>If you did not request this, please ignore this email.</p>
   `;
 
-  await sendEmail({
+  const emailResult = await sendEmail({
     to: user.email,
     subject: "LifeSync Password Reset",
     html: message,
   });
 
-  return res.status(200).json(new ApiResponse(200, {}, "Reset token dispatched to email"));
+  const emailDelivered = emailResult?.delivered === true;
+
+  if (!emailDelivered) {
+    const reason = emailResult?.reason === "no_smtp_config"
+      ? "Email service is not configured. Reset link was logged on the server console."
+      : `Email delivery failed: ${emailResult?.error || "Unknown error"}`;
+    return res.status(200).json(
+      new ApiResponse(200, { emailDelivered, emailWarning: reason }, "Password reset generated but email delivery failed — check server logs.")
+    );
+  }
+
+  return res.status(200).json(new ApiResponse(200, { emailDelivered: true }, "Reset token dispatched to email"));
 });
 
 const resetPassword = asyncHandler(async (req, res) => {
