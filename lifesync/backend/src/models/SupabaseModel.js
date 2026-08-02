@@ -37,9 +37,14 @@ export const toCamelCase = (row) => {
 
   const camelObj = {};
   for (const key of Object.keys(row)) {
+    if (key.startsWith("_") && key !== "_id") {
+      camelObj[key] = row[key];
+      continue;
+    }
+
     let camelKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
     // Preserve _id alias for MongoDB frontend/controller compatibility
-    if (key === "id") {
+    if (key === "id" || key === "_id") {
       camelObj._id = row[key];
       camelObj.id = row[key];
     } else if (key === "user_id") {
@@ -431,5 +436,11 @@ export class SupabaseModel {
       },
       "deleteMany"
     );
+  }
+
+  async distinct(field, query = {}) {
+    const results = await this.find(query);
+    const values = results.map((item) => item[field]);
+    return [...new Set(values.filter((v) => v !== undefined && v !== null))];
   }
 }
