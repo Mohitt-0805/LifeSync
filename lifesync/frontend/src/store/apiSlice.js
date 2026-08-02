@@ -1,8 +1,10 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { setCredentials, logout } from "../features/auth/authSlice";
 
-const apiBaseUrl = import.meta.env.VITE_API_URL 
-  ? `${import.meta.env.VITE_API_URL.replace(/\/$/, "")}/api/v1`
+// Check both variable names for compatibility (dashboard may use either)
+const rawApiUrl = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL;
+const apiBaseUrl = rawApiUrl
+  ? rawApiUrl.replace(/\/+$/, "").replace(/\/api\/v1$/, "") + "/api/v1"
   : "/api/v1";
 
 const baseQuery = fetchBaseQuery({
