@@ -1,64 +1,122 @@
 import nodemailer from "nodemailer";
 
-const sendEmail = async ({ to, subject, html }) => {
-  try {
-    const smtpUser = process.env.SMTP_USER?.trim();
-    const rawPass = process.env.SMTP_PASS?.trim() || "";
-    // Strip spaces from Google App Passwords (e.g. "hpkm mkem jdor nuci" -> "hpkmmkemjdornuci")
-    const smtpPass = rawPass.replace(/\s+/g, "");
-    const smtpHost = process.env.SMTP_HOST?.trim() || "smtp.gmail.com";
+// ─── Strategy 1: Resend HTTP API (most reliable on cloud platforms) ──────────
+// Uses HTTPS instead of SMTP, so it bypasses port-blocking and Gmail IP bans.
+// Free tier: 100 emails/day (3,000/month). Signup: https://resend.com
+const sendViaResend = async ({ to, subject, html }) => {
+  const apiKey = process.env.RESEND_API_KEY.trim();
+  // Resend free tier requires sending from onboarding@resend.dev
+  // unless you verify a custom domain. Set RESEND_FROM for custom domains.
+  const from = process.env.RESEND_FROM || "LifeSync <onboarding@resend.dev>";
 
-    // If SMTP details are missing or placeholders, fallback to console log
-    if (!smtpUser || smtpUser === "smtp_user_placeholder" || !smtpPass) {
-      console.log("\n✉️  [LOCAL MAIL CAPTURE] -----------------------");
-      console.log(`Subject: ${subject}`);
-      console.log(`To:      ${to}`);
-      console.log(`Body:\n${html.replace(/<[^>]*>/g, "")}`);
-      console.log("-----------------------------------------------\n");
-      return { delivered: false, reason: "no_smtp_config", loggedOnConsole: true };
-    }
+  console.log(`📨 [Resend] Sending email to ${to} | Subject: "${subject}"`);
 
-    const port = parseInt(process.env.SMTP_PORT) || 587;
-    const isGmail = smtpHost.toLowerCase().includes("gmail");
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ from, to: [to], subject, html }),
+  });
 
-    const transporterOptions = {
-      host: smtpHost,
-      port: port,
-      secure: port === 465,
-      auth: {
-        user: smtpUser,
-        pass: smtpPass,
-      },
-      tls: {
-        rejectUnauthorized: false,
-      },
-      connectionTimeout: 10000,
-    };
+  const data = await response.json();
 
-    if (isGmail) {
-      transporterOptions.service = "gmail";
-    }
-
-    const transporter = nodemailer.createTransport(transporterOptions);
-
-    const info = await transporter.sendMail({
-      from: `LifeSync <${process.env.FROM_EMAIL || smtpUser}>`,
-      to,
-      subject,
-      html,
-    });
-
-    console.log(`✅ Email sent successfully to ${to} (MessageId: ${info.messageId})`);
-    return { ...info, delivered: true };
-  } catch (error) {
-    console.error("❌ Nodemailer send failed, falling back to console log. Error:", error.message || error);
-    console.log("\n✉️  [FALLBACK MAIL CAPTURE] --------------------");
-    console.log(`Subject: ${subject}`);
-    console.log(`To:      ${to}`);
-    console.log(`Body:\n${html.replace(/<[^>]*>/g, "")}`);
-    console.log("-----------------------------------------------\n");
-    return { delivered: false, reason: "smtp_error", error: error.message || String(error), loggedOnConsole: true };
+  if (!response.ok) {
+    console.error("❌ Resend API error:", JSON.stringify(data));
+    throw new Error(data.message || `Resend returned HTTP ${response.status}`);
   }
+
+  console.log(`✅ Email sent via Resend to ${to} (ID: ${data.id})`);
+  return { id: data.id, delivered: true };
+};
+
+// ─── Strategy 2: SMTP via Nodemailer ─────────────────────────────────────────
+// Works well locally and with relay services (Brevo, Mailgun, etc.)
+// May fail on cloud platforms when using Gmail due to IP-based blocking.
+const sendViaSmtp = async ({ to, subject, html }) => {
+  const smtpUser = process.env.SMTP_USER?.trim();
+  const rawPass = process.env.SMTP_PASS?.trim() || "";
+  // Strip spaces from Google App Passwords (e.g. "hpkm mkem jdor nuci")
+  const smtpPass = rawPass.replace(/\s+/g, "");
+  const smtpHost = process.env.SMTP_HOST?.trim() || "smtp.gmail.com";
+
+  // If SMTP details are missing or placeholders, signal not-configured
+  if (!smtpUser || smtpUser === "smtp_user_placeholder" || !smtpPass) {
+    return null; // null = not configured, caller will try next strategy
+  }
+
+  console.log(`📨 [SMTP] Sending email to ${to} via ${smtpHost} | Subject: "${subject}"`);
+
+  const port = parseInt(process.env.SMTP_PORT) || 587;
+  const isGmail = smtpHost.toLowerCase().includes("gmail");
+
+  const transporterOptions = {
+    host: smtpHost,
+    port: port,
+    secure: port === 465,
+    auth: {
+      user: smtpUser,
+      pass: smtpPass,
+    },
+    tls: {
+      rejectUnauthorized: false,
+    },
+    connectionTimeout: 15000,
+    greetingTimeout: 10000,
+    socketTimeout: 20000,
+  };
+
+  if (isGmail) {
+    transporterOptions.service = "gmail";
+  }
+
+  const transporter = nodemailer.createTransport(transporterOptions);
+
+  const info = await transporter.sendMail({
+    from: `LifeSync <${process.env.FROM_EMAIL || smtpUser}>`,
+    to,
+    subject,
+    html,
+  });
+
+  console.log(`✅ Email sent via SMTP to ${to} (MessageId: ${info.messageId})`);
+  return { ...info, delivered: true };
+};
+
+// ─── Strategy 3: Console fallback (dev / no provider configured) ─────────────
+const logToConsole = ({ to, subject, html }) => {
+  console.log("\n✉️  [CONSOLE MAIL CAPTURE] -----------------------");
+  console.log(`Subject: ${subject}`);
+  console.log(`To:      ${to}`);
+  console.log(`Body:\n${html.replace(/<[^>]*>/g, "")}`);
+  console.log("-----------------------------------------------\n");
+  return { delivered: false, reason: "no_email_provider", loggedOnConsole: true };
+};
+
+// ─── Main send function ─────────────────────────────────────────────────────
+// Priority: Resend HTTP → SMTP → Console fallback
+const sendEmail = async ({ to, subject, html }) => {
+  // 1. Try Resend HTTP API (best for cloud deployments)
+  if (process.env.RESEND_API_KEY?.trim()) {
+    try {
+      return await sendViaResend({ to, subject, html });
+    } catch (resendError) {
+      console.error("❌ Resend failed, falling through to SMTP:", resendError.message);
+    }
+  }
+
+  // 2. Try SMTP via Nodemailer
+  try {
+    const smtpResult = await sendViaSmtp({ to, subject, html });
+    if (smtpResult) return smtpResult; // null means not configured
+  } catch (smtpError) {
+    console.error("❌ SMTP failed, falling through to console:", smtpError.message);
+  }
+
+  // 3. Console fallback
+  console.warn("⚠️  No email provider succeeded. Logging email to console.");
+  return logToConsole({ to, subject, html });
 };
 
 const sendOtpEmail = async (to, otp, purpose = "Verification") => {
@@ -96,4 +154,3 @@ const sendOtpEmail = async (to, otp, purpose = "Verification") => {
 };
 
 export { sendEmail, sendOtpEmail };
-
