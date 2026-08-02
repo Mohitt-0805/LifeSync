@@ -309,6 +309,10 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='notes' AND column_name='folder') THEN
         ALTER TABLE notes ADD COLUMN folder VARCHAR(100) DEFAULT 'General';
     END IF;
+    -- habits table columns
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='habits' AND column_name='target_days') THEN
+        ALTER TABLE habits ADD COLUMN target_days INT DEFAULT 1;
+    END IF;
 END $$;
 
 -- Indexes for performance optimization
