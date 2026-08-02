@@ -94,13 +94,23 @@ const logToConsole = ({ to, subject, html }) => {
   return { delivered: false, reason: "no_email_provider", loggedOnConsole: true };
 };
 
+// Helper to wrap promises in a timeout to prevent hanging backend requests
+const withTimeout = (promise, ms, label = "Operation") => {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms)
+    )
+  ]);
+};
+
 // ─── Main send function ─────────────────────────────────────────────────────
 // Priority: Resend HTTP → SMTP → Console fallback
 const sendEmail = async ({ to, subject, html }) => {
   // 1. Try Resend HTTP API (best for cloud deployments)
   if (process.env.RESEND_API_KEY?.trim()) {
     try {
-      return await sendViaResend({ to, subject, html });
+      return await withTimeout(sendViaResend({ to, subject, html }), 4000, "Resend email dispatch");
     } catch (resendError) {
       console.error("❌ Resend failed, falling through to SMTP:", resendError.message);
     }
@@ -108,8 +118,11 @@ const sendEmail = async ({ to, subject, html }) => {
 
   // 2. Try SMTP via Nodemailer
   try {
-    const smtpResult = await sendViaSmtp({ to, subject, html });
-    if (smtpResult) return smtpResult; // null means not configured
+    const smtpResult = await withTimeout(sendViaSmtp({ to, subject, html }), 5000, "SMTP email dispatch");
+    if (smtpResult) {
+      // If SMTP is configured, we make sure it executes within the timeout window
+      return smtpResult;
+    }
   } catch (smtpError) {
     console.error("❌ SMTP failed, falling through to console:", smtpError.message);
   }

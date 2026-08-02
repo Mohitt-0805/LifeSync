@@ -99,6 +99,27 @@ export class SupabaseModel {
     return process.env.USE_MOCK_DB !== "true" && Boolean(supabase);
   }
 
+  /**
+   * Resilient execution helper:
+   * Tries to execute the Supabase query with a 5-second timeout.
+   * If it fails or times out, it logs a warning and falls back to the in-memory Mock DB.
+   */
+  async runQuery(supabaseFn, mockFn, label = "query") {
+    if (!this.isSupabaseActive) {
+      return await mockFn();
+    }
+
+    try {
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error(`Database query timeout (${label})`)), 5000)
+      );
+      return await Promise.race([supabaseFn(), timeoutPromise]);
+    } catch (err) {
+      console.warn(`⚠️ Supabase ${label} error on ${this.tableName}: ${err.message || err}. Falling back to in-memory Mock DB.`);
+      return await mockFn();
+    }
+  }
+
   attachDocMethods(doc) {
     if (!doc) return null;
     const formatted = toCamelCase(doc);
@@ -140,116 +161,119 @@ export class SupabaseModel {
   }
 
   find(query = {}) {
-    if (!this.isSupabaseActive) {
-      return this.mockFallback.find(query);
-    }
-
     const exec = async () => {
-      let builder = supabase.from(this.tableName).select("*");
-      const snakeQuery = toSnakeCase(query);
+      return await this.runQuery(
+        async () => {
+          let builder = supabase.from(this.tableName).select("*");
+          const snakeQuery = toSnakeCase(query);
 
-      for (const [key, val] of Object.entries(snakeQuery)) {
-        if (val === undefined || val === null) continue;
-        if (typeof val === "object" && !Array.isArray(val)) {
-          if (val.$gte !== undefined) builder = builder.gte(key, val.$gte);
-          if (val.$lte !== undefined) builder = builder.lte(key, val.$lte);
-          if (val.$gt !== undefined) builder = builder.gt(key, val.$gt);
-          if (val.$lt !== undefined) builder = builder.lt(key, val.$lt);
-          if (val.$ne !== undefined) builder = builder.neq(key, val.$ne);
-        } else {
-          builder = builder.eq(key, val);
-        }
-      }
+          for (const [key, val] of Object.entries(snakeQuery)) {
+            if (val === undefined || val === null) continue;
+            if (typeof val === "object" && !Array.isArray(val)) {
+              if (val.$gte !== undefined) builder = builder.gte(key, val.$gte);
+              if (val.$lte !== undefined) builder = builder.lte(key, val.$lte);
+              if (val.$gt !== undefined) builder = builder.gt(key, val.$gt);
+              if (val.$lt !== undefined) builder = builder.lt(key, val.$lt);
+              if (val.$ne !== undefined) builder = builder.neq(key, val.$ne);
+            } else {
+              builder = builder.eq(key, val);
+            }
+          }
 
-      const { data, error } = await builder;
-      if (error) {
-        console.error(`Supabase find error on ${this.tableName}:`, error.message);
-        throw new Error(error.message);
-      }
-      return data || [];
+          const { data, error } = await builder;
+          if (error) throw error;
+          return data || [];
+        },
+        async () => {
+          return await this.mockFallback.find(query);
+        },
+        "find"
+      );
     };
 
     return new SupabaseQueryBuilder(this, exec());
   }
 
   findOne(query = {}) {
-    if (!this.isSupabaseActive) {
-      return this.mockFallback.findOne(query);
-    }
-
     const exec = async () => {
-      let builder = supabase.from(this.tableName).select("*");
-      const snakeQuery = toSnakeCase(query);
+      return await this.runQuery(
+        async () => {
+          let builder = supabase.from(this.tableName).select("*");
+          const snakeQuery = toSnakeCase(query);
 
-      for (const [key, val] of Object.entries(snakeQuery)) {
-        if (val === undefined || val === null) continue;
-        if (typeof val === "object" && !Array.isArray(val)) {
-          if (val.$gte !== undefined) builder = builder.gte(key, val.$gte);
-          if (val.$lte !== undefined) builder = builder.lte(key, val.$lte);
-          if (val.$gt !== undefined) builder = builder.gt(key, val.$gt);
-          if (val.$lt !== undefined) builder = builder.lt(key, val.$lt);
-          if (val.$ne !== undefined) builder = builder.neq(key, val.$ne);
-        } else {
-          builder = builder.eq(key, val);
-        }
-      }
+          for (const [key, val] of Object.entries(snakeQuery)) {
+            if (val === undefined || val === null) continue;
+            if (typeof val === "object" && !Array.isArray(val)) {
+              if (val.$gte !== undefined) builder = builder.gte(key, val.$gte);
+              if (val.$lte !== undefined) builder = builder.lte(key, val.$lte);
+              if (val.$gt !== undefined) builder = builder.gt(key, val.$gt);
+              if (val.$lt !== undefined) builder = builder.lt(key, val.$lt);
+              if (val.$ne !== undefined) builder = builder.neq(key, val.$ne);
+            } else {
+              builder = builder.eq(key, val);
+            }
+          }
 
-      const { data, error } = await builder.limit(1).maybeSingle();
-      if (error && error.code !== "PGRST116") {
-        console.error(`Supabase findOne error on ${this.tableName}:`, error.message);
-        throw new Error(error.message);
-      }
-      return data || null;
+          const { data, error } = await builder.limit(1).maybeSingle();
+          if (error && error.code !== "PGRST116") throw error;
+          return data || null;
+        },
+        async () => {
+          return await this.mockFallback.findOne(query);
+        },
+        "findOne"
+      );
     };
 
     return new SupabaseQueryBuilder(this, exec());
   }
 
   findById(id) {
-    if (!this.isSupabaseActive) {
-      return this.mockFallback.findById(id);
-    }
-
     const exec = async () => {
-      if (!id) return null;
-      const { data, error } = await supabase
-        .from(this.tableName)
-        .select("*")
-        .eq("id", id.toString())
-        .limit(1)
-        .maybeSingle();
+      return await this.runQuery(
+        async () => {
+          if (!id) return null;
+          const { data, error } = await supabase
+            .from(this.tableName)
+            .select("*")
+            .eq("id", id.toString())
+            .limit(1)
+            .maybeSingle();
 
-      if (error && error.code !== "PGRST116") {
-        console.error(`Supabase findById error on ${this.tableName}:`, error.message);
-        throw new Error(error.message);
-      }
-      return data || null;
+          if (error && error.code !== "PGRST116") throw error;
+          return data || null;
+        },
+        async () => {
+          return await this.mockFallback.findById(id);
+        },
+        "findById"
+      );
     };
 
     return new SupabaseQueryBuilder(this, exec());
   }
 
   async create(data) {
-    if (!this.isSupabaseActive) {
-      return this.mockFallback.create(data);
-    }
+    return await this.runQuery(
+      async () => {
+        const snakeData = toSnakeCase(data);
+        if (!snakeData.created_at) snakeData.created_at = new Date().toISOString();
+        if (!snakeData.updated_at) snakeData.updated_at = new Date().toISOString();
 
-    const snakeData = toSnakeCase(data);
-    if (!snakeData.created_at) snakeData.created_at = new Date().toISOString();
-    if (!snakeData.updated_at) snakeData.updated_at = new Date().toISOString();
+        const { data: created, error } = await supabase
+          .from(this.tableName)
+          .insert([snakeData])
+          .select()
+          .single();
 
-    const { data: created, error } = await supabase
-      .from(this.tableName)
-      .insert([snakeData])
-      .select()
-      .single();
-
-    if (error) {
-      console.error(`Supabase create error on ${this.tableName}:`, error.message);
-      throw new Error(error.message);
-    }
-
-    return this.attachDocMethods(created);
+        if (error) throw error;
+        return this.attachDocMethods(created);
+      },
+      async () => {
+        return await this.mockFallback.create(data);
+      },
+      "create"
+    );
   }
 
   async findByIdAndUpdate(id, update = {}, options = {}) {
@@ -257,42 +281,42 @@ export class SupabaseModel {
   }
 
   async findOneAndUpdate(query = {}, update = {}, options = {}) {
-    if (!this.isSupabaseActive) {
-      return this.mockFallback.findOneAndUpdate(query, update, options);
-    }
+    return await this.runQuery(
+      async () => {
+        const snakeQuery = toSnakeCase(query);
+        let snakeUpdate = {};
 
-    const snakeQuery = toSnakeCase(query);
-    let snakeUpdate = {};
+        if (update.$unset) {
+          Object.keys(update.$unset).forEach((k) => {
+            const snakeK = k.replace(/([A-Z])/g, "_$1").toLowerCase();
+            snakeUpdate[snakeK] = null;
+          });
+        }
 
-    if (update.$unset) {
-      Object.keys(update.$unset).forEach((k) => {
-        const snakeK = k.replace(/([A-Z])/g, "_$1").toLowerCase();
-        snakeUpdate[snakeK] = null;
-      });
-    }
+        const plainUpdate = Object.fromEntries(
+          Object.entries(update).filter(([k]) => !k.startsWith("$"))
+        );
+        Object.assign(snakeUpdate, toSnakeCase(plainUpdate));
+        snakeUpdate.updated_at = new Date().toISOString();
 
-    const plainUpdate = Object.fromEntries(
-      Object.entries(update).filter(([k]) => !k.startsWith("$"))
+        let builder = supabase.from(this.tableName).update(snakeUpdate);
+
+        for (const [key, val] of Object.entries(snakeQuery)) {
+          if (val !== undefined && val !== null) {
+            builder = builder.eq(key, val);
+          }
+        }
+
+        const { data, error } = await builder.select().limit(1).maybeSingle();
+
+        if (error) throw error;
+        return data ? this.attachDocMethods(data) : null;
+      },
+      async () => {
+        return await this.mockFallback.findOneAndUpdate(query, update, options);
+      },
+      "findOneAndUpdate"
     );
-    Object.assign(snakeUpdate, toSnakeCase(plainUpdate));
-    snakeUpdate.updated_at = new Date().toISOString();
-
-    let builder = supabase.from(this.tableName).update(snakeUpdate);
-
-    for (const [key, val] of Object.entries(snakeQuery)) {
-      if (val !== undefined && val !== null) {
-        builder = builder.eq(key, val);
-      }
-    }
-
-    const { data, error } = await builder.select().limit(1).maybeSingle();
-
-    if (error) {
-      console.error(`Supabase findOneAndUpdate error on ${this.tableName}:`, error.message);
-      throw new Error(error.message);
-    }
-
-    return data ? this.attachDocMethods(data) : null;
   }
 
   async findByIdAndDelete(id) {
@@ -300,70 +324,72 @@ export class SupabaseModel {
   }
 
   async findOneAndDelete(query = {}) {
-    if (!this.isSupabaseActive) {
-      return this.mockFallback.findOneAndDelete(query);
-    }
+    return await this.runQuery(
+      async () => {
+        const snakeQuery = toSnakeCase(query);
+        let builder = supabase.from(this.tableName).delete();
 
-    const snakeQuery = toSnakeCase(query);
-    let builder = supabase.from(this.tableName).delete();
+        for (const [key, val] of Object.entries(snakeQuery)) {
+          if (val !== undefined && val !== null) {
+            builder = builder.eq(key, val);
+          }
+        }
 
-    for (const [key, val] of Object.entries(snakeQuery)) {
-      if (val !== undefined && val !== null) {
-        builder = builder.eq(key, val);
-      }
-    }
+        const { data, error } = await builder.select().limit(1).maybeSingle();
 
-    const { data, error } = await builder.select().limit(1).maybeSingle();
-
-    if (error) {
-      console.error(`Supabase findOneAndDelete error on ${this.tableName}:`, error.message);
-      throw new Error(error.message);
-    }
-
-    return data ? this.attachDocMethods(data) : null;
+        if (error) throw error;
+        return data ? this.attachDocMethods(data) : null;
+      },
+      async () => {
+        return await this.mockFallback.findOneAndDelete(query);
+      },
+      "findOneAndDelete"
+    );
   }
 
   async countDocuments(query = {}) {
-    if (!this.isSupabaseActive) {
-      return this.mockFallback.countDocuments(query);
-    }
+    return await this.runQuery(
+      async () => {
+        let builder = supabase.from(this.tableName).select("id", { count: "exact", head: true });
+        const snakeQuery = toSnakeCase(query);
 
-    let builder = supabase.from(this.tableName).select("id", { count: "exact", head: true });
-    const snakeQuery = toSnakeCase(query);
+        for (const [key, val] of Object.entries(snakeQuery)) {
+          if (val !== undefined && val !== null) {
+            builder = builder.eq(key, val);
+          }
+        }
 
-    for (const [key, val] of Object.entries(snakeQuery)) {
-      if (val !== undefined && val !== null) {
-        builder = builder.eq(key, val);
-      }
-    }
-
-    const { count, error } = await builder;
-    if (error) {
-      console.error(`Supabase countDocuments error on ${this.tableName}:`, error.message);
-      return 0;
-    }
-    return count || 0;
+        const { count, error } = await builder;
+        if (error) throw error;
+        return count || 0;
+      },
+      async () => {
+        return await this.mockFallback.countDocuments(query);
+      },
+      "countDocuments"
+    );
   }
 
   async deleteMany(query = {}) {
-    if (!this.isSupabaseActive) {
-      return this.mockFallback.deleteMany(query);
-    }
+    return await this.runQuery(
+      async () => {
+        let builder = supabase.from(this.tableName).delete();
+        const snakeQuery = toSnakeCase(query);
 
-    let builder = supabase.from(this.tableName).delete();
-    const snakeQuery = toSnakeCase(query);
+        for (const [key, val] of Object.entries(snakeQuery)) {
+          if (val !== undefined && val !== null) {
+            builder = builder.eq(key, val);
+          }
+        }
 
-    for (const [key, val] of Object.entries(snakeQuery)) {
-      if (val !== undefined && val !== null) {
-        builder = builder.eq(key, val);
-      }
-    }
-
-    const { data, error } = await builder.select();
-    if (error) {
-      console.error(`Supabase deleteMany error on ${this.tableName}:`, error.message);
-      return { deletedCount: 0 };
-    }
-    return { deletedCount: data ? data.length : 0 };
+        const { data, error } = await builder.select();
+        if (error) throw error;
+        return { deletedCount: data ? data.length : 0 };
+      },
+      async () => {
+        return await this.mockFallback.deleteMany(query);
+      },
+      "deleteMany"
+    );
   }
 }

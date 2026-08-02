@@ -12,13 +12,18 @@ const connectDB = async () => {
   }
 
   try {
-    const { error } = await supabase.from("users").select("id").limit(1);
+    const connectionPromise = supabase.from("users").select("id").limit(1);
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("Supabase connection check timed out after 4 seconds")), 4000)
+    );
+    const { error } = await Promise.race([connectionPromise, timeoutPromise]);
+    
     if (error && error.code !== "PGRST116" && !error.message?.includes("0 rows")) {
       console.warn(`⚠️  Supabase table warning (schema may need initialization): ${error.message}`);
     }
     console.log(`\n⚡ Connected to Supabase PostgreSQL Cloud Database!`);
   } catch (error) {
-    console.error("Supabase connection check failed: ", error.message || error);
+    console.error("❌ Supabase connection check failed (defaulting to offline or error handling): ", error.message || error);
   }
 };
 
