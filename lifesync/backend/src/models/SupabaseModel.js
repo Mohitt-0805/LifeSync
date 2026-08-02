@@ -289,8 +289,22 @@ export class SupabaseModel {
     return await this.runQuery(
       async () => {
         const snakeQuery = toSnakeCase(query);
-        let snakeUpdate = {};
+        
+        // Check if row already exists
+        let findBuilder = supabase.from(this.tableName).select("*");
+        for (const [key, val] of Object.entries(snakeQuery)) {
+          if (val !== undefined && val !== null) {
+            findBuilder = findBuilder.eq(key, val);
+          }
+        }
+        const { data: existing, error: findError } = await findBuilder.limit(1).maybeSingle();
+        if (findError && findError.code !== "PGRST116") throw findError;
 
+        if (!existing && !options.upsert) {
+          return null;
+        }
+
+        let snakeUpdate = {};
         if (update.$unset) {
           Object.keys(update.$unset).forEach((k) => {
             const snakeK = k.replace(/([A-Z])/g, "_$1").toLowerCase();
@@ -302,20 +316,33 @@ export class SupabaseModel {
           Object.entries(update).filter(([k]) => !k.startsWith("$"))
         );
         Object.assign(snakeUpdate, toSnakeCase(plainUpdate));
-        snakeUpdate.updated_at = new Date().toISOString();
 
-        let builder = supabase.from(this.tableName).update(snakeUpdate);
-
-        for (const [key, val] of Object.entries(snakeQuery)) {
-          if (val !== undefined && val !== null) {
-            builder = builder.eq(key, val);
+        if (existing) {
+          // Perform update
+          snakeUpdate.updated_at = new Date().toISOString();
+          let builder = supabase.from(this.tableName).update(snakeUpdate);
+          for (const [key, val] of Object.entries(snakeQuery)) {
+            if (val !== undefined && val !== null) {
+              builder = builder.eq(key, val);
+            }
           }
+          const { data, error } = await builder.select().limit(1).maybeSingle();
+          if (error) throw error;
+          return data ? this.attachDocMethods(data) : null;
+        } else {
+          // Perform insert (upsert)
+          const insertData = { ...snakeQuery, ...snakeUpdate };
+          if (!insertData.created_at) insertData.created_at = new Date().toISOString();
+          if (!insertData.updated_at) insertData.updated_at = new Date().toISOString();
+
+          const { data, error } = await supabase
+            .from(this.tableName)
+            .insert([insertData])
+            .select()
+            .single();
+          if (error) throw error;
+          return this.attachDocMethods(data);
         }
-
-        const { data, error } = await builder.select().limit(1).maybeSingle();
-
-        if (error) throw error;
-        return data ? this.attachDocMethods(data) : null;
       },
       async () => {
         return await this.mockFallback.findOneAndUpdate(query, update, options);
