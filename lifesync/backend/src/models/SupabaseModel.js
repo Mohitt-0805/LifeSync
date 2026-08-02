@@ -22,6 +22,14 @@ export const toSnakeCase = (obj) => {
       snakeKey = "id";
     } else if (key === "user") {
       snakeKey = "user_id";
+    } else if (key === "habit") {
+      snakeKey = "habit_id";
+    } else if (key === "goal") {
+      snakeKey = "goal_id";
+    } else if (key === "lesson") {
+      snakeKey = "lesson_id";
+    } else if (key === "course") {
+      snakeKey = "course_id";
     } else {
       snakeKey = key.replace(/([A-Z])/g, "_$1").toLowerCase();
     }
@@ -50,6 +58,18 @@ export const toCamelCase = (row) => {
     } else if (key === "user_id") {
       camelObj.user = row[key];
       camelObj.userId = row[key];
+    } else if (key === "habit_id") {
+      camelObj.habit = row[key];
+      camelObj.habitId = row[key];
+    } else if (key === "goal_id") {
+      camelObj.goal = row[key];
+      camelObj.goalId = row[key];
+    } else if (key === "lesson_id") {
+      camelObj.lesson = row[key];
+      camelObj.lessonId = row[key];
+    } else if (key === "course_id") {
+      camelObj.course = row[key];
+      camelObj.courseId = row[key];
     } else {
       camelObj[camelKey] = row[key];
     }
