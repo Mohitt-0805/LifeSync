@@ -2,6 +2,14 @@ import crypto from "crypto";
 import { supabase } from "../config/supabase.js";
 import { store, MockModelBase, MockDoc } from "../utils/mockDb.js";
 
+// Helper: serialize query values (specifically Javascript Date objects to ISO strings)
+const serializeQueryVal = (val) => {
+  if (val instanceof Date) {
+    return val.toISOString();
+  }
+  return val;
+};
+
 // Helper: convert camelCase object keys to snake_case for PostgreSQL
 export const toSnakeCase = (obj) => {
   if (!obj || typeof obj !== "object") return obj;
@@ -174,14 +182,14 @@ export class SupabaseModel {
 
           for (const [key, val] of Object.entries(snakeQuery)) {
             if (val === undefined || val === null) continue;
-            if (typeof val === "object" && !Array.isArray(val)) {
-              if (val.$gte !== undefined) builder = builder.gte(key, val.$gte);
-              if (val.$lte !== undefined) builder = builder.lte(key, val.$lte);
-              if (val.$gt !== undefined) builder = builder.gt(key, val.$gt);
-              if (val.$lt !== undefined) builder = builder.lt(key, val.$lt);
-              if (val.$ne !== undefined) builder = builder.neq(key, val.$ne);
+            if (typeof val === "object" && !Array.isArray(val) && !(val instanceof Date)) {
+              if (val.$gte !== undefined) builder = builder.gte(key, serializeQueryVal(val.$gte));
+              if (val.$lte !== undefined) builder = builder.lte(key, serializeQueryVal(val.$lte));
+              if (val.$gt !== undefined) builder = builder.gt(key, serializeQueryVal(val.$gt));
+              if (val.$lt !== undefined) builder = builder.lt(key, serializeQueryVal(val.$lt));
+              if (val.$ne !== undefined) builder = builder.neq(key, serializeQueryVal(val.$ne));
             } else {
-              builder = builder.eq(key, val);
+              builder = builder.eq(key, serializeQueryVal(val));
             }
           }
 
@@ -208,14 +216,14 @@ export class SupabaseModel {
 
           for (const [key, val] of Object.entries(snakeQuery)) {
             if (val === undefined || val === null) continue;
-            if (typeof val === "object" && !Array.isArray(val)) {
-              if (val.$gte !== undefined) builder = builder.gte(key, val.$gte);
-              if (val.$lte !== undefined) builder = builder.lte(key, val.$lte);
-              if (val.$gt !== undefined) builder = builder.gt(key, val.$gt);
-              if (val.$lt !== undefined) builder = builder.lt(key, val.$lt);
-              if (val.$ne !== undefined) builder = builder.neq(key, val.$ne);
+            if (typeof val === "object" && !Array.isArray(val) && !(val instanceof Date)) {
+              if (val.$gte !== undefined) builder = builder.gte(key, serializeQueryVal(val.$gte));
+              if (val.$lte !== undefined) builder = builder.lte(key, serializeQueryVal(val.$lte));
+              if (val.$gt !== undefined) builder = builder.gt(key, serializeQueryVal(val.$gt));
+              if (val.$lt !== undefined) builder = builder.lt(key, serializeQueryVal(val.$lt));
+              if (val.$ne !== undefined) builder = builder.neq(key, serializeQueryVal(val.$ne));
             } else {
-              builder = builder.eq(key, val);
+              builder = builder.eq(key, serializeQueryVal(val));
             }
           }
 
@@ -294,7 +302,7 @@ export class SupabaseModel {
         let findBuilder = supabase.from(this.tableName).select("*");
         for (const [key, val] of Object.entries(snakeQuery)) {
           if (val !== undefined && val !== null) {
-            findBuilder = findBuilder.eq(key, val);
+            findBuilder = findBuilder.eq(key, serializeQueryVal(val));
           }
         }
         const { data: existing, error: findError } = await findBuilder.limit(1).maybeSingle();
@@ -323,7 +331,7 @@ export class SupabaseModel {
           let builder = supabase.from(this.tableName).update(snakeUpdate);
           for (const [key, val] of Object.entries(snakeQuery)) {
             if (val !== undefined && val !== null) {
-              builder = builder.eq(key, val);
+              builder = builder.eq(key, serializeQueryVal(val));
             }
           }
           const { data, error } = await builder.select().limit(1).maybeSingle();
@@ -363,7 +371,7 @@ export class SupabaseModel {
 
         for (const [key, val] of Object.entries(snakeQuery)) {
           if (val !== undefined && val !== null) {
-            builder = builder.eq(key, val);
+            builder = builder.eq(key, serializeQueryVal(val));
           }
         }
 
@@ -387,7 +395,7 @@ export class SupabaseModel {
 
         for (const [key, val] of Object.entries(snakeQuery)) {
           if (val !== undefined && val !== null) {
-            builder = builder.eq(key, val);
+            builder = builder.eq(key, serializeQueryVal(val));
           }
         }
 
@@ -410,7 +418,7 @@ export class SupabaseModel {
 
         for (const [key, val] of Object.entries(snakeQuery)) {
           if (val !== undefined && val !== null) {
-            builder = builder.eq(key, val);
+            builder = builder.eq(key, serializeQueryVal(val));
           }
         }
 

@@ -301,6 +301,10 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='events' AND column_name='reminders') THEN
         ALTER TABLE events ADD COLUMN reminders TEXT[] DEFAULT '{}';
     END IF;
+    -- expenses table columns
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='expenses' AND column_name='description') THEN
+        ALTER TABLE expenses ADD COLUMN description TEXT DEFAULT '';
+    END IF;
 END $$;
 
 -- Indexes for performance optimization
