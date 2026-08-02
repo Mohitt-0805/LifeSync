@@ -173,6 +173,8 @@ CREATE TABLE IF NOT EXISTS activities (
     entity_type VARCHAR(100),
     entity_id VARCHAR(255),
     details JSONB DEFAULT '{}'::jsonb,
+    module VARCHAR(100) DEFAULT '',
+    description TEXT DEFAULT '',
     xp_earned INT DEFAULT 0,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -341,6 +343,16 @@ BEGIN
     -- activities table columns
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='activities' AND column_name='updated_at') THEN
         ALTER TABLE activities ADD COLUMN updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='activities' AND column_name='module') THEN
+        ALTER TABLE activities ADD COLUMN module VARCHAR(100) DEFAULT '';
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='activities' AND column_name='description') THEN
+        ALTER TABLE activities ADD COLUMN description TEXT DEFAULT '';
+    END IF;
+    -- tasks table columns
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='tasks' AND column_name='completed_at') THEN
+        ALTER TABLE tasks ADD COLUMN completed_at TIMESTAMP WITH TIME ZONE;
     END IF;
 END $$;
 
