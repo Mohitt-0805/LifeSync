@@ -317,6 +317,12 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='goals' AND column_name='milestones') THEN
         ALTER TABLE goals ADD COLUMN milestones JSONB DEFAULT '[]'::jsonb;
     END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='goals' AND column_name='start_date') THEN
+        ALTER TABLE goals ADD COLUMN start_date TIMESTAMP WITH TIME ZONE;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='goals' AND column_name='target_date') THEN
+        ALTER TABLE goals ADD COLUMN target_date TIMESTAMP WITH TIME ZONE;
+    END IF;
 END $$;
 
 -- Indexes for performance optimization
