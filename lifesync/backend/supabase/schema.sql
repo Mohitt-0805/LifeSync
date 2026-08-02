@@ -161,7 +161,8 @@ CREATE TABLE IF NOT EXISTS notifications (
     message TEXT NOT NULL,
     type VARCHAR(50) DEFAULT 'info',
     is_read BOOLEAN DEFAULT false,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- 13. Activities Table
@@ -173,7 +174,8 @@ CREATE TABLE IF NOT EXISTS activities (
     entity_id VARCHAR(255),
     details JSONB DEFAULT '{}'::jsonb,
     xp_earned INT DEFAULT 0,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- 14. Achievements Table
@@ -182,10 +184,12 @@ CREATE TABLE IF NOT EXISTS achievements (
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
     title VARCHAR(255) NOT NULL,
     description TEXT DEFAULT '',
+    badge_code VARCHAR(255),
     badge_icon VARCHAR(255),
     unlocked_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     xp_reward INT DEFAULT 0,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- 15. Courses Table
@@ -322,6 +326,21 @@ BEGIN
     END IF;
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='goals' AND column_name='target_date') THEN
         ALTER TABLE goals ADD COLUMN target_date TIMESTAMP WITH TIME ZONE;
+    END IF;
+    -- achievements table columns
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='achievements' AND column_name='badge_code') THEN
+        ALTER TABLE achievements ADD COLUMN badge_code VARCHAR(255);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='achievements' AND column_name='updated_at') THEN
+        ALTER TABLE achievements ADD COLUMN updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
+    END IF;
+    -- notifications table columns
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='notifications' AND column_name='updated_at') THEN
+        ALTER TABLE notifications ADD COLUMN updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
+    END IF;
+    -- activities table columns
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='activities' AND column_name='updated_at') THEN
+        ALTER TABLE activities ADD COLUMN updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
     END IF;
 END $$;
 
