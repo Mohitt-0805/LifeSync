@@ -12,6 +12,8 @@ export const toSnakeCase = (obj) => {
     let snakeKey;
     if (key === "_id") {
       snakeKey = "id";
+    } else if (key === "user") {
+      snakeKey = "user_id";
     } else {
       snakeKey = key.replace(/([A-Z])/g, "_$1").toLowerCase();
     }
@@ -32,6 +34,9 @@ export const toCamelCase = (row) => {
     if (key === "id") {
       camelObj._id = row[key];
       camelObj.id = row[key];
+    } else if (key === "user_id") {
+      camelObj.user = row[key];
+      camelObj.userId = row[key];
     } else {
       camelObj[camelKey] = row[key];
     }

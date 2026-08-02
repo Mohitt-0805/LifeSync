@@ -6,7 +6,12 @@ class ExpenseModel extends SupabaseModel {
   }
 
   async aggregate(pipeline = []) {
-    const allExpenses = await this.find({});
+    const matchStage = pipeline.find((s) => s.$match)?.$match || {};
+    const query = {};
+    if (matchStage.user) {
+      query.user = matchStage.user;
+    }
+    const allExpenses = await this.find(query);
 
     const expenses = allExpenses.filter((e) => e.type === "expense");
     const incomes = allExpenses.filter((e) => e.type === "income");
