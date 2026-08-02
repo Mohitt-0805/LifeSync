@@ -91,7 +91,6 @@ class MockUserDoc extends MockDoc {
     if (this.xp === undefined) this.xp = 0;
     if (this.level === undefined) this.level = 1;
     if (this.role === undefined) this.role = "user";
-    if (this.isVerified === undefined) this.isVerified = false;
     if (this.avatar === undefined) this.avatar = "";
     if (this.phoneNumber === undefined) this.phoneNumber = "";
     if (this.whatsappOptIn === undefined) this.whatsappOptIn = false;
@@ -105,8 +104,6 @@ class MockUserDoc extends MockDoc {
       };
     }
     if (this.currency === undefined) this.currency = "INR";
-    if (this.otp === undefined) this.otp = null;
-    if (this.otpExpire === undefined) this.otpExpire = null;
   }
 
   async isPasswordCorrect(password) {

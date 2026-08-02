@@ -9,7 +9,6 @@ export class UserDoc {
     this.xp = fields.xp ?? 0;
     this.level = fields.level ?? 1;
     this.role = fields.role || "user";
-    this.isVerified = fields.isVerified ?? false;
     this.avatar = fields.avatar || "";
     this.phoneNumber = fields.phoneNumber || "";
     this.whatsappOptIn = fields.whatsappOptIn ?? false;

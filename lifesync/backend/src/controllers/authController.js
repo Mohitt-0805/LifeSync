@@ -4,17 +4,12 @@ import { User } from "../models/User.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { sendEmail, sendOtpEmail } from "../utils/mail.js";
 
 // Cookie options for secure storage of refresh tokens
 const cookieOptions = {
   httpOnly: true,
   secure: process.env.NODE_ENV === "production",
   sameSite: "Lax",
-};
-
-const generate6DigitOtp = () => {
-  return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
 const generateAccessAndRefereshTokens = async (userId) => {
@@ -37,243 +32,32 @@ const registerUser = asyncHandler(async (req, res) => {
 
   const existedUser = await User.findOne({ email });
 
-  if (existedUser && existedUser.isVerified) {
+  if (existedUser) {
     throw new ApiError(409, "User with this email already exists");
   }
 
-  const otp = generate6DigitOtp();
-  const otpExpire = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
-
-  let user;
-  if (existedUser && !existedUser.isVerified) {
-    existedUser.name = name;
-    existedUser.password = password;
-    existedUser.otp = otp;
-    existedUser.otpExpire = otpExpire;
-    await existedUser.save();
-    user = existedUser;
-  } else {
-    user = await User.create({
-      name,
-      email,
-      password,
-      isVerified: false,
-      otp,
-      otpExpire,
-    });
-  }
-
-  // Dispatch OTP Email and track delivery
-  let emailDelivered = false;
-  let emailWarning = null;
-  try {
-    const emailResult = await sendOtpEmail(email, otp, "Signup Verification");
-    emailDelivered = emailResult?.delivered === true;
-    if (!emailDelivered) {
-      emailWarning = emailResult?.reason === "no_smtp_config"
-        ? "Email service is not configured. OTP was logged on the server console."
-        : `Email delivery failed: ${emailResult?.error || "Unknown error"}. OTP was logged on the server console.`;
-    }
-  } catch (emailError) {
-    console.error("⚠️ OTP email dispatch error:", emailError.message || emailError);
-    emailWarning = `Email delivery failed: ${emailError.message || "Unknown error"}`;
-  }
-
-  return res.status(200).json(
-    new ApiResponse(
-      200,
-      { requiresOtp: true, email: user.email, emailDelivered, ...(emailWarning && { emailWarning }) },
-      emailDelivered
-        ? "Registration initiated. Verification OTP sent to your email."
-        : "Registration initiated. OTP generated but email delivery failed — check server logs."
-    )
-  );
-});
-
-const verifyOtp = asyncHandler(async (req, res) => {
-  const { email, otp } = req.body;
-
-  if (!email || !otp) {
-    throw new ApiError(400, "Email and OTP are required");
-  }
-
-  const user = await User.findOne({ email });
-
-  if (!user) {
-    throw new ApiError(404, "User does not exist");
-  }
-
-  if (!user.otp || user.otp !== otp.toString().trim()) {
-    throw new ApiError(400, "Invalid OTP code");
-  }
-
-  if (!user.otpExpire || new Date(user.otpExpire) < new Date()) {
-    throw new ApiError(400, "OTP code has expired. Please request a new one.");
-  }
-
-  user.isVerified = true;
-  user.otp = undefined;
-  user.otpExpire = undefined;
-  await user.save({ validateBeforeSave: false });
+  const user = await User.create({
+    name,
+    email,
+    password,
+  });
 
   const { accessToken, refreshToken } = await generateAccessAndRefereshTokens(user._id);
 
-  const verifiedUser = await User.findById(user._id).select(
-    "-password -refreshToken -verificationToken -resetPasswordToken -resetPasswordExpire -otp -otpExpire"
+  const createdUser = await User.findById(user._id).select(
+    "-password -refreshToken -verificationToken -resetPasswordToken -resetPasswordExpire"
   );
 
   return res
-    .status(200)
+    .status(201)
     .cookie("refreshToken", refreshToken, cookieOptions)
     .json(
       new ApiResponse(
-        200,
-        { user: verifiedUser, accessToken },
-        "OTP verified successfully. Welcome to LifeSync!"
+        201,
+        { user: createdUser, accessToken },
+        "User registered successfully. Welcome to LifeSync!"
       )
     );
-});
-
-const sendOtp = asyncHandler(async (req, res) => {
-  const { email, purpose = "Verification" } = req.body;
-
-  if (!email) {
-    throw new ApiError(400, "Email address is required");
-  }
-
-  let user = await User.findOne({ email });
-
-  const otp = generate6DigitOtp();
-  const otpExpire = new Date(Date.now() + 10 * 60 * 1000);
-
-  if (!user) {
-    user = await User.create({
-      name: email.split("@")[0],
-      email,
-      isVerified: false,
-      otp,
-      otpExpire,
-    });
-  } else {
-    user.otp = otp;
-    user.otpExpire = otpExpire;
-    await user.save({ validateBeforeSave: false });
-  }
-
-  let emailDelivered = false;
-  let emailWarning = null;
-  try {
-    const emailResult = await sendOtpEmail(email, otp, purpose);
-    emailDelivered = emailResult?.delivered === true;
-    if (!emailDelivered) {
-      emailWarning = emailResult?.reason === "no_smtp_config"
-        ? "Email service is not configured. OTP was logged on the server console."
-        : `Email delivery failed: ${emailResult?.error || "Unknown error"}. OTP was logged on the server console.`;
-    }
-  } catch (emailError) {
-    console.error("⚠️ OTP email dispatch error:", emailError.message || emailError);
-    emailWarning = `Email delivery failed: ${emailError.message || "Unknown error"}`;
-  }
-
-  return res.status(200).json(
-    new ApiResponse(
-      200,
-      { email, sent: true, emailDelivered, ...(emailWarning && { emailWarning }) },
-      emailDelivered
-        ? "OTP code has been sent to your email."
-        : "OTP generated but email delivery failed — check server logs."
-    )
-  );
-});
-
-const loginWithOtp = asyncHandler(async (req, res) => {
-  const { email, otp } = req.body;
-
-  if (!email || !otp) {
-    throw new ApiError(400, "Email and OTP are required");
-  }
-
-  const user = await User.findOne({ email });
-
-  if (!user) {
-    throw new ApiError(404, "User with email does not exist");
-  }
-
-  if (!user.otp || user.otp !== otp.toString().trim()) {
-    throw new ApiError(400, "Invalid OTP code");
-  }
-
-  if (!user.otpExpire || new Date(user.otpExpire) < new Date()) {
-    throw new ApiError(400, "OTP has expired. Please request a new code.");
-  }
-
-  user.isVerified = true;
-  user.otp = undefined;
-  user.otpExpire = undefined;
-  await user.save({ validateBeforeSave: false });
-
-  const { accessToken, refreshToken } = await generateAccessAndRefereshTokens(user._id);
-
-  const loggedInUser = await User.findById(user._id).select(
-    "-password -refreshToken -verificationToken -resetPasswordToken -resetPasswordExpire -otp -otpExpire"
-  );
-
-  return res
-    .status(200)
-    .cookie("refreshToken", refreshToken, cookieOptions)
-    .json(
-      new ApiResponse(
-        200,
-        { user: loggedInUser, accessToken },
-        "Logged in successfully via OTP"
-      )
-    );
-});
-
-const resendOtp = asyncHandler(async (req, res) => {
-  const { email, purpose = "Verification" } = req.body;
-
-  if (!email) {
-    throw new ApiError(400, "Email is required");
-  }
-
-  const user = await User.findOne({ email });
-
-  if (!user) {
-    throw new ApiError(404, "User does not exist");
-  }
-
-  const otp = generate6DigitOtp();
-  const otpExpire = new Date(Date.now() + 10 * 60 * 1000);
-
-  user.otp = otp;
-  user.otpExpire = otpExpire;
-  await user.save({ validateBeforeSave: false });
-
-  let emailDelivered = false;
-  let emailWarning = null;
-  try {
-    const emailResult = await sendOtpEmail(email, otp, purpose);
-    emailDelivered = emailResult?.delivered === true;
-    if (!emailDelivered) {
-      emailWarning = emailResult?.reason === "no_smtp_config"
-        ? "Email service is not configured. OTP was logged on the server console."
-        : `Email delivery failed: ${emailResult?.error || "Unknown error"}. OTP was logged on the server console.`;
-    }
-  } catch (emailError) {
-    console.error("⚠️ OTP email dispatch error:", emailError.message || emailError);
-    emailWarning = `Email delivery failed: ${emailError.message || "Unknown error"}`;
-  }
-
-  return res.status(200).json(
-    new ApiResponse(
-      200,
-      { email, resent: true, emailDelivered, ...(emailWarning && { emailWarning }) },
-      emailDelivered
-        ? "A new OTP has been dispatched to your email."
-        : "OTP regenerated but email delivery failed — check server logs."
-    )
-  );
 });
 
 const loginUser = asyncHandler(async (req, res) => {
@@ -293,7 +77,9 @@ const loginUser = asyncHandler(async (req, res) => {
 
   const { accessToken, refreshToken } = await generateAccessAndRefereshTokens(user._id);
 
-  const loggedInUser = await User.findById(user._id).select("-password -refreshToken -verificationToken -resetPasswordToken -resetPasswordExpire -otp -otpExpire");
+  const loggedInUser = await User.findById(user._id).select(
+    "-password -refreshToken -verificationToken -resetPasswordToken -resetPasswordExpire"
+  );
 
   return res
     .status(200)
@@ -391,31 +177,18 @@ const forgotPassword = asyncHandler(async (req, res) => {
 
   const resetUrl = `${process.env.FRONTEND_URL || "http://localhost:5173"}/reset-password/${resetToken}`;
 
-  const message = `
-    <h1>Password Reset Request</h1>
-    <p>You requested a password reset. Please click on the link below to reset your password:</p>
-    <a href="${resetUrl}" clicktracking=off>${resetUrl}</a>
-    <p>If you did not request this, please ignore this email.</p>
-  `;
+  console.log("\n✉️  [PASSWORD RESET LINK CAPTURE] ------------------");
+  console.log(`To:      ${user.email}`);
+  console.log(`Link:    ${resetUrl}`);
+  console.log("---------------------------------------------------\n");
 
-  const emailResult = await sendEmail({
-    to: user.email,
-    subject: "LifeSync Password Reset",
-    html: message,
-  });
-
-  const emailDelivered = emailResult?.delivered === true;
-
-  if (!emailDelivered) {
-    const reason = emailResult?.reason === "no_smtp_config"
-      ? "Email service is not configured. Reset link was logged on the server console."
-      : `Email delivery failed: ${emailResult?.error || "Unknown error"}`;
-    return res.status(200).json(
-      new ApiResponse(200, { emailDelivered, emailWarning: reason }, "Password reset generated but email delivery failed — check server logs.")
-    );
-  }
-
-  return res.status(200).json(new ApiResponse(200, { emailDelivered: true }, "Reset token dispatched to email"));
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      { emailDelivered: false, emailWarning: "Email service is disabled. The reset link has been logged to the server console." },
+      "Password reset generated. Check the server console logs for the reset link."
+    )
+  );
 });
 
 const resetPassword = asyncHandler(async (req, res) => {
@@ -470,7 +243,9 @@ const updateUserProfile = asyncHandler(async (req, res) => {
 
   await user.save({ validateBeforeSave: false });
 
-  const updatedUser = await User.findById(user._id).select("-password -refreshToken -verificationToken -resetPasswordToken -resetPasswordExpire -otp -otpExpire");
+  const updatedUser = await User.findById(user._id).select(
+    "-password -refreshToken -verificationToken -resetPasswordToken -resetPasswordExpire"
+  );
 
   return res
     .status(200)
@@ -479,10 +254,6 @@ const updateUserProfile = asyncHandler(async (req, res) => {
 
 export {
   registerUser,
-  verifyOtp,
-  sendOtp,
-  loginWithOtp,
-  resendOtp,
   loginUser,
   logoutUser,
   refreshAccessToken,
@@ -491,4 +262,3 @@ export {
   getUserProfile,
   updateUserProfile,
 };
-

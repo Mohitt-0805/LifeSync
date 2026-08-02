@@ -16,34 +16,6 @@ export const authApi = apiSlice.injectEndpoints({
         body: userData,
       }),
     }),
-    verifyOtp: builder.mutation({
-      query: (data) => ({
-        url: "/auth/verify-otp",
-        method: "POST",
-        body: data,
-      }),
-    }),
-    sendOtp: builder.mutation({
-      query: (data) => ({
-        url: "/auth/send-otp",
-        method: "POST",
-        body: data,
-      }),
-    }),
-    loginWithOtp: builder.mutation({
-      query: (data) => ({
-        url: "/auth/login-otp",
-        method: "POST",
-        body: data,
-      }),
-    }),
-    resendOtp: builder.mutation({
-      query: (data) => ({
-        url: "/auth/resend-otp",
-        method: "POST",
-        body: data,
-      }),
-    }),
     logout: builder.mutation({
       query: () => ({
         url: "/auth/logout",
@@ -82,14 +54,9 @@ export const authApi = apiSlice.injectEndpoints({
 export const {
   useLoginMutation,
   useRegisterMutation,
-  useVerifyOtpMutation,
-  useSendOtpMutation,
-  useLoginWithOtpMutation,
-  useResendOtpMutation,
   useLogoutMutation,
   useGetProfileQuery,
   useUpdateProfileMutation,
   useForgotPasswordMutation,
   useResetPasswordMutation,
 } = authApi;
-

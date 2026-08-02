@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { triggerDeadlineReminders, testEmail } from "../controllers/devController.js";
+import { triggerDeadlineReminders } from "../controllers/devController.js";
 
 const router = Router();
 
@@ -8,8 +8,5 @@ router.get("/run-deadline-cron", triggerDeadlineReminders);
 router.post("/run-deadline-cron", triggerDeadlineReminders);
 router.get("/trigger-deadline-reminders", triggerDeadlineReminders);
 router.post("/trigger-deadline-reminders", triggerDeadlineReminders);
-
-router.get("/test-email", testEmail);
-router.post("/test-email", testEmail);
 
 export default router;

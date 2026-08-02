@@ -4,10 +4,6 @@ import { validate } from "../middlewares/validateMiddleware.js";
 import { verifyJWT } from "../middlewares/authMiddleware.js";
 import {
   registerUser,
-  verifyOtp,
-  sendOtp,
-  loginWithOtp,
-  resendOtp,
   loginUser,
   logoutUser,
   refreshAccessToken,
@@ -33,17 +29,6 @@ const loginRules = [
   body("password").notEmpty().withMessage("Password is required"),
 ];
 
-const verifyOtpRules = [
-  body("email").isEmail().withMessage("Invalid email address"),
-  body("otp")
-    .isLength({ min: 6, max: 6 })
-    .withMessage("OTP must be 6 digits"),
-];
-
-const sendOtpRules = [
-  body("email").isEmail().withMessage("Invalid email address"),
-];
-
 const forgotPasswordRules = [
   body("email").isEmail().withMessage("Invalid email address"),
 ];
@@ -57,10 +42,6 @@ const resetPasswordRules = [
 // Public Routes
 router.post("/signup", signupRules, validate, registerUser);
 router.post("/login", loginRules, validate, loginUser);
-router.post("/verify-otp", verifyOtpRules, validate, verifyOtp);
-router.post("/send-otp", sendOtpRules, validate, sendOtp);
-router.post("/login-otp", verifyOtpRules, validate, loginWithOtp);
-router.post("/resend-otp", sendOtpRules, validate, resendOtp);
 router.post("/refresh", refreshAccessToken);
 router.post("/forgot-password", forgotPasswordRules, validate, forgotPassword);
 router.post("/reset-password/:token", resetPasswordRules, validate, resetPassword);

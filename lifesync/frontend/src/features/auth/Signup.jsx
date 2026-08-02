@@ -44,17 +44,11 @@ export default function Signup() {
 
     try {
       const res = await register({ name, email, password }).unwrap();
-      if (res.data?.requiresOtp) {
-        navigate(`/verify-otp?email=${encodeURIComponent(res.data.email || email)}`, {
-          state: { email: res.data.email || email, emailWarning: res.data.emailWarning },
-        });
-      } else if (res.data?.user && res.data?.accessToken) {
+      if (res.data?.user && res.data?.accessToken) {
         dispatch(setCredentials({ user: res.data.user, token: res.data.accessToken }));
         navigate("/");
       } else {
-        navigate(`/verify-otp?email=${encodeURIComponent(email)}`, {
-          state: { email, emailWarning: res.data?.emailWarning },
-        });
+        setErrors({ global: "Registration succeeded but authentication tokens were missing." });
       }
     } catch (err) {
       console.error(err);
