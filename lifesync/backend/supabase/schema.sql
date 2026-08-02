@@ -313,6 +313,10 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='habits' AND column_name='target_days') THEN
         ALTER TABLE habits ADD COLUMN target_days INT DEFAULT 1;
     END IF;
+    -- goals table columns
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='goals' AND column_name='milestones') THEN
+        ALTER TABLE goals ADD COLUMN milestones JSONB DEFAULT '[]'::jsonb;
+    END IF;
 END $$;
 
 -- Indexes for performance optimization
