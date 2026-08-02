@@ -305,6 +305,10 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='expenses' AND column_name='description') THEN
         ALTER TABLE expenses ADD COLUMN description TEXT DEFAULT '';
     END IF;
+    -- notes table columns
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='notes' AND column_name='folder') THEN
+        ALTER TABLE notes ADD COLUMN folder VARCHAR(100) DEFAULT 'General';
+    END IF;
 END $$;
 
 -- Indexes for performance optimization
