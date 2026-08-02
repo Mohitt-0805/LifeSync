@@ -25,6 +25,7 @@ const createExpense = asyncHandler(async (req, res) => {
     type,
     category,
     description,
+    title: description || category || "Expense",
     date: date ? new Date(date) : new Date(),
   });
 
